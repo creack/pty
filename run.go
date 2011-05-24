@@ -23,7 +23,7 @@ func Run(name string, argv, envv []string, dir string) (c *exec.Cmd, err os.Erro
 	fd[1] = fd[0]
 	fd[2] = fd[0]
 	c.Stdout = c.Stdin
-	c.Process, err = os.StartProcess(name, argv, envv, dir, fd[:])
+	c.Process, err = os.StartProcess(name, argv, &os.ProcAttr{Env: envv, Dir: dir, Files: fd[:]})
 	fd[0].Close()
 	if err != nil {
 		c.Stdin.Close()

@@ -14,7 +14,7 @@ const (
 
 // Opens a pty and its corresponding tty.
 func Open() (pty, tty *os.File, err os.Error) {
-	p, err := os.Open("/dev/ptmx", os.O_RDWR, 0)
+	p, err := os.OpenFile("/dev/ptmx", os.O_RDWR, 0)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -29,7 +29,7 @@ func Open() (pty, tty *os.File, err os.Error) {
 		return nil, nil, err
 	}
 
-	t, err := os.Open(sname, os.O_RDWR, 0)
+	t, err := os.OpenFile(sname, os.O_RDWR, 0)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -49,13 +49,12 @@ func ptsname(f *os.File) (string, os.Error) {
 	return "/dev/tty" + string([]byte{
 		ptdev1[minor(fi.Rdev)/32],
 		ptdev2[minor(fi.Rdev)%32],
-	}), nil
+	}),nil
 }
 
 
 func grantpt(f *os.File) os.Error {
-	p, err := os.StartProcess("/bin/ptchown", []string{"/bin/ptchown"},
-nil, "", []*os.File{f})
+	p, err := os.StartProcess("/bin/ptchown", []string{"/bin/ptchown"}, &os.ProcAttr{Files: []*os.File{f}})
 	if err != nil {
 		return err
 	}

@@ -15,7 +15,7 @@ const (
 
 // Opens a pty and its corresponding tty.
 func Open() (pty, tty *os.File, err os.Error) {
-	p, err := os.Open("/dev/ptmx", os.O_RDWR, 0)
+	p, err := os.OpenFile("/dev/ptmx", os.O_RDWR, 0)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -30,7 +30,7 @@ func Open() (pty, tty *os.File, err os.Error) {
 		return nil, nil, err
 	}
 
-	t, err := os.Open(sname, os.O_RDWR, 0)
+	t, err := os.OpenFile(sname, os.O_RDWR, 0)
 	if err != nil {
 		return nil, nil, err
 	}
