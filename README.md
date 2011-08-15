@@ -2,8 +2,8 @@
 
 Pty is a Go package for using unix pseudo-terminals.
 
-(Note, the Darwin implementation doesn't work. If you
-are interested in fixing it, I'd appreciate a patch!)
+(Note, there is only a Linux implementation. I'd appreciate a patch
+for other systems!)
 
 ## Install
 
