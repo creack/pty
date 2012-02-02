@@ -7,37 +7,35 @@ for other systems!)
 
 ## Install
 
-    goinstall github.com/kr/pty
+    go get github.com/kr/pty
 
 ## Example
 
-    package main
+```go
+package main
 
-    import (
-        "fmt"
-        "github.com/kr/pty"
-        "io"
-        "os"
-    )
+import (
+	"fmt"
+	"github.com/kr/pty"
+	"io"
+	"os"
+	"os/exec"
+)
 
+func main() {
+	c := exec.Command("grep", "--color=auto", "bar")
+	f, err := pty.Start(c)
+	if err != nil {
+		panic(err)
+	}
 
-    func main() {
-        c, err := pty.Run(
-            "/bin/grep",
-            []string{"grep", "--color=auto", "bar"},
-            nil,
-            "",
-        )
-        if err != nil {
-            panic(err)
-        }
-
-        go func() {
-            fmt.Fprintln(c.Stdin, "foo")
-            fmt.Fprintln(c.Stdin, "bar")
-            fmt.Fprintln(c.Stdin, "baz")
-            c.Stdin.Close()
-        }()
-        io.Copy(os.Stdout, c.Stdout)
-        c.Wait(0)
-    }
+	go func() {
+		fmt.Fprintln(f, "foo")
+		fmt.Fprintln(f, "bar")
+		fmt.Fprintln(f, "baz")
+		f.Close()
+	}()
+	io.Copy(os.Stdout, f)
+	c.Wait()
+}
+```
