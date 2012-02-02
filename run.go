@@ -1,10 +1,9 @@
 package pty
 
 import (
-	"os/exec"
 	"os"
+	"os/exec"
 )
-
 
 // Run starts a process with its stdin, stdout, and stderr
 // connected to a pseudo-terminal tty;

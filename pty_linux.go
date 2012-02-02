@@ -12,7 +12,6 @@ const (
 	sys_TIOCSPTLCK = 0x40045431
 )
 
-
 // Opens a pty and its corresponding tty.
 func Open() (pty, tty *os.File, err error) {
 	p, err := os.OpenFile("/dev/ptmx", os.O_RDWR, 0)
@@ -37,7 +36,6 @@ func Open() (pty, tty *os.File, err error) {
 	return p, t, nil
 }
 
-
 func ptsname(f *os.File) (string, error) {
 	var n int
 	err := ioctl(f.Fd(), sys_TIOCGPTN, &n)
@@ -47,12 +45,10 @@ func ptsname(f *os.File) (string, error) {
 	return "/dev/pts/" + strconv.Itoa(n), nil
 }
 
-
 func unlockpt(f *os.File) error {
 	var u int
 	return ioctl(f.Fd(), sys_TIOCSPTLCK, &u)
 }
-
 
 func ioctl(fd uintptr, cmd uintptr, data *int) error {
 	_, _, e := syscall.Syscall(
