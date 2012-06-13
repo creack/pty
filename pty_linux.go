@@ -14,7 +14,7 @@ const (
 
 
 // Opens a pty and its corresponding tty.
-func Open() (pty, tty *os.File, err os.Error) {
+func Open() (pty, tty *os.File, err error) {
 	p, err := os.OpenFile("/dev/ptmx", os.O_RDWR, 0)
 	if err != nil {
 		return nil, nil, err
@@ -38,7 +38,7 @@ func Open() (pty, tty *os.File, err os.Error) {
 }
 
 
-func ptsname(f *os.File) (string, os.Error) {
+func ptsname(f *os.File) (string, error) {
 	var n int
 	err := ioctl(f.Fd(), sys_TIOCGPTN, &n)
 	if err != nil {
@@ -48,21 +48,21 @@ func ptsname(f *os.File) (string, os.Error) {
 }
 
 
-func unlockpt(f *os.File) os.Error {
+func unlockpt(f *os.File) error {
 	var u int
 	return ioctl(f.Fd(), sys_TIOCSPTLCK, &u)
 }
 
 
-func ioctl(fd int, cmd uint, data *int) os.Error {
+func ioctl(fd uintptr, cmd uintptr, data *int) error {
 	_, _, e := syscall.Syscall(
 		syscall.SYS_IOCTL,
-		uintptr(fd),
-		uintptr(cmd),
+		fd,
+		cmd,
 		uintptr(unsafe.Pointer(data)),
 	)
 	if e != 0 {
-		return os.ENOTTY
+		return syscall.ENOTTY
 	}
 	return nil
 }
