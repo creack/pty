@@ -2,9 +2,6 @@
 
 Pty is a Go package for using unix pseudo-terminals.
 
-(Note, there is only a Linux implementation. I'd appreciate a patch
-for other systems!)
-
 ## Install
 
     go get github.com/kr/pty
