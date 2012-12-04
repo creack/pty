@@ -15,7 +15,6 @@ for other systems!)
 package main
 
 import (
-	"fmt"
 	"github.com/kr/pty"
 	"io"
 	"os"
@@ -30,12 +29,11 @@ func main() {
 	}
 
 	go func() {
-		fmt.Fprintln(f, "foo")
-		fmt.Fprintln(f, "bar")
-		fmt.Fprintln(f, "baz")
-		f.Close()
+		f.Write([]byte("foo\n"))
+		f.Write([]byte("bar\n"))
+		f.Write([]byte("baz\n"))
+		f.Write([]byte{4}) // EOT
 	}()
 	io.Copy(os.Stdout, f)
-	c.Wait()
 }
 ```
