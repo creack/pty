@@ -12,8 +12,7 @@ const (
 	sys_TIOCSPTLCK = 0x40045431
 )
 
-// Opens a pty and its corresponding tty.
-func Open() (pty, tty *os.File, err error) {
+func open() (pty, tty *os.File, err error) {
 	p, err := os.OpenFile("/dev/ptmx", os.O_RDWR, 0)
 	if err != nil {
 		return nil, nil, err
