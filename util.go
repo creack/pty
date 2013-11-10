@@ -14,6 +14,10 @@ func Getsize(t *os.File) (rows, cols int, err error) {
 	return int(ws.ws_row), int(ws.ws_col), err
 }
 
+func Setsize(t *os.File, row uint16, cols uint16) error {
+  return setsize(t, row, cols)
+}
+
 type winsize struct {
 	ws_row    uint16
 	ws_col    uint16
