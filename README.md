@@ -25,6 +25,10 @@ func main() {
 		panic(err)
 	}
 
+  // Set the size of the pty
+  pty.Setsize(f, 20, 40)
+
+
 	go func() {
 		f.Write([]byte("foo\n"))
 		f.Write([]byte("bar\n"))
