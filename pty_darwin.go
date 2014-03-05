@@ -67,3 +67,10 @@ func ioctl(fd, cmd, ptr uintptr) error {
 	}
 	return nil
 }
+
+func setsize(f *os.File, rows uint16, cols uint16) error {
+  var ws winsize
+  ws.ws_row   = rows
+  ws.ws_col   = cols
+	return ioctl(f.Fd(), syscall.TIOCSWINSZ, uintptr(unsafe.Pointer(&ws)))
+}
