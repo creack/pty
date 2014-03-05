@@ -1,7 +1,7 @@
 package pty
 
 import (
-  "errors"
+	"errors"
 	"os"
 	"strconv"
 	"syscall"
@@ -58,5 +58,5 @@ func ioctl(fd uintptr, cmd uintptr, data *int) error {
 }
 
 func setsize(f *os.File, rows uint16, cols uint16) error {
-  return ErrUnsupported
+	return ErrUnsupported
 }

@@ -15,7 +15,7 @@ func Getsize(t *os.File) (rows, cols int, err error) {
 }
 
 func Setsize(t *os.File, rows uint16, cols uint16) error {
-  return setsize(t, rows, cols)
+	return setsize(t, rows, cols)
 }
 
 type winsize struct {
