@@ -1,6 +1,7 @@
 package pty
 
 import (
+  "errors"
 	"os"
 	"strconv"
 	"syscall"
@@ -10,6 +11,10 @@ import (
 const (
 	sys_TIOCGPTN   = 0x4004740F
 	sys_TIOCSPTLCK = 0x40045431
+)
+
+var (
+	ErrUnsupported = errors.New("Unsupported")
 )
 
 func open() (pty, tty *os.File, err error) {
@@ -50,4 +55,8 @@ func ioctl(fd uintptr, cmd uintptr, data *int) error {
 		return syscall.ENOTTY
 	}
 	return nil
+}
+
+func setsize(f *os.File, rows uint16, cols uint16) error {
+  return ErrUnsupported
 }

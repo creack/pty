@@ -30,3 +30,7 @@ func unlockpt(f *os.File) error {
 func ioctl(fd, cmd, ptr uintptr) error {
 	return ErrUnsupported
 }
+
+func setsize(f *os.File, rows uint16, cols uint16) error {
+	return ErrUnsupported
+}
