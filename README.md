@@ -25,8 +25,8 @@ func main() {
 		panic(err)
 	}
 
-  // Set the size of the pty
-  pty.Setsize(f, 20, 40)
+	// Set the size of the pty
+	pty.Setsize(f, 20, 40)
 
 
 	go func() {
