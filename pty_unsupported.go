@@ -3,12 +3,7 @@
 package pty
 
 import (
-	"errors"
 	"os"
-)
-
-var (
-	ErrUnsupported = errors.New("Unsupported")
 )
 
 func open() (pty, tty *os.File, err error) {
