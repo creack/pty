@@ -61,3 +61,7 @@ func ioctl(fd uintptr, cmd uintptr, data *int) error {
 	}
 	return nil
 }
+
+func setsize(f *os.File, rows uint16, cols uint16) error {
+	return ErrUnsupported
+}
