@@ -45,6 +45,12 @@ func isptmaster(fd uintptr) (bool, error) {
 	return (result == 0), err
 }
 
+// from <sys/filio.h>
+type fiodgnameArg struct {
+	Len _C_int
+	Buf uintptr
+}
+
 var (
 	emptyFiodgnameArg fiodgnameArg
 	ioctl_FIODGNAME   = _IOW('f', 120, unsafe.Sizeof(emptyFiodgnameArg))
@@ -61,7 +67,7 @@ func ptsname(f *os.File) (string, error) {
 
 	var (
 		buf [SPECNAMELEN + 1]byte
-		arg = newFiodgnameArg(buf[:])
+		arg = &fiodgnameArg{_C_int(len(buf)), uintptr(unsafe.Pointer(&buf[0]))}
 	)
 	err = ioctl(f.Fd(), ioctl_FIODGNAME, uintptr(unsafe.Pointer(arg)))
 	if err != nil {
