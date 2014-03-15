@@ -3,6 +3,10 @@
 
 package pty
 
+const (
+	_C_SPECNAMELEN = 0x3f
+)
+
 type fiodgnameArg struct {
 	Len       int32
 	Pad_cgo_0 [4]byte

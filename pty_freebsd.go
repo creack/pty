@@ -7,10 +7,6 @@ import (
 	"unsafe"
 )
 
-const (
-	SPECNAMELEN = 63 /* max length of devicename <sys/param.h> */
-)
-
 func posix_openpt(oflag int) (fd int, err error) {
 	r0, _, e1 := syscall.Syscall(syscall.SYS_POSIX_OPENPT, uintptr(oflag), 0, 0)
 	fd = int(r0)
@@ -21,7 +17,7 @@ func posix_openpt(oflag int) (fd int, err error) {
 }
 
 func open() (pty, tty *os.File, err error) {
-	fd, err := posix_openpt(syscall.O_RDWR)
+	fd, err := posix_openpt(syscall.O_RDWR | syscall.O_CLOEXEC)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -40,9 +36,8 @@ func open() (pty, tty *os.File, err error) {
 }
 
 func isptmaster(fd uintptr) (bool, error) {
-	var result int
-	err := ioctl(fd, syscall.TIOCPTMASTER, uintptr(unsafe.Pointer(&result)))
-	return (result == 0), err
+	err := ioctl(fd, syscall.TIOCPTMASTER, 0)
+	return err == nil, err
 }
 
 var (
@@ -59,7 +54,7 @@ func ptsname(f *os.File) (string, error) {
 		return "", syscall.EINVAL
 	}
 
-	const n = SPECNAMELEN + 1
+	const n = _C_SPECNAMELEN + 1
 	var (
 		buf = make([]byte, n)
 		arg = fiodgnameArg{Len: n, Buf: (*byte)(unsafe.Pointer(&buf[0]))}
