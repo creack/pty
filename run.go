@@ -33,6 +33,8 @@ func Start(c *exec.Cmd) (pty *os.File, err error) {
 	return pty, err
 }
 
+// Start raw acts as Start but put the terminal into raw mode. Returns an
+// additional function that should be used to restore the terminal state.
 func StartRaw(c *exec.Cmd) (pty *os.File, restore func(), err error) {
 	pty, err = Start(c)
 	oldState, err := MakeRaw(pty)
