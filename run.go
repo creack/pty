@@ -1,6 +1,7 @@
 package pty
 
 import (
+	"log"
 	"os"
 	"os/exec"
 	"syscall"
@@ -32,12 +33,17 @@ func Start(c *exec.Cmd) (pty *os.File, err error) {
 	return pty, err
 }
 
-func StartRaw(c *exec.Cmd) (pty *os.File, oldState *State, err error) {
+func StartRaw(c *exec.Cmd) (pty *os.File, restore func(), err error) {
 	pty, err = Start(c)
-	oldState, err = MakeRaw(pty)
+	oldState, err := MakeRaw(pty)
 	if err != nil {
 		return nil, nil, err
 	}
 
-	return pty, oldState, nil
+	return pty, func() {
+		var err error
+		if err = Restore(pty, oldState); err != nil {
+			log.Fatal(err)
+		}
+	}, nil
 }
