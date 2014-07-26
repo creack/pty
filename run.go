@@ -1,10 +1,11 @@
 package pty
 
 import (
-	"log"
 	"os"
 	"os/exec"
 	"syscall"
+
+	"code.google.com/p/go.crypto/ssh/terminal"
 )
 
 // Start assigns a pseudo-terminal tty os.File to c.Stdin, c.Stdout,
@@ -17,7 +18,7 @@ func Start(c *exec.Cmd) (pty *os.File, err error) {
 	}
 	defer tty.Close()
 
-	if IsTerminal(pty) == false {
+	if terminal.IsTerminal(int(pty.Fd())) == false {
 		return nil, ErrNotTerminal
 	}
 
@@ -37,15 +38,12 @@ func Start(c *exec.Cmd) (pty *os.File, err error) {
 // additional function that should be used to restore the terminal state.
 func StartRaw(c *exec.Cmd) (pty *os.File, restore func(), err error) {
 	pty, err = Start(c)
-	oldState, err := MakeRaw(pty)
+	oldState, err := terminal.MakeRaw(int(pty.Fd()))
 	if err != nil {
 		return nil, nil, err
 	}
 
 	return pty, func() {
-		var err error
-		if err = Restore(pty, oldState); err != nil {
-			log.Fatal(err)
-		}
+		_ = terminal.Restore(int(pty.Fd()), oldState)
 	}, nil
 }
