@@ -7,11 +7,6 @@ import (
 	"unsafe"
 )
 
-const (
-	ioctlReadTermios  = syscall.TIOCGETA
-	ioctlWriteTermios = syscall.TIOCSETA
-)
-
 func posix_openpt(oflag int) (fd int, err error) {
 	r0, _, e1 := syscall.Syscall(syscall.SYS_POSIX_OPENPT, uintptr(oflag), 0, 0)
 	fd = int(r0)

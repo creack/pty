@@ -7,11 +7,6 @@ import (
 	"unsafe"
 )
 
-const (
-	ioctlReadTermios  = syscall.TIOCGETA
-	ioctlWriteTermios = syscall.TIOCSETA
-)
-
 func open() (pty, tty *os.File, err error) {
 	p, err := os.OpenFile("/dev/ptmx", os.O_RDWR, 0)
 	if err != nil {
