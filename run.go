@@ -15,6 +15,16 @@ func Start(c *exec.Cmd) (pty *os.File, err error) {
 		return nil, err
 	}
 	defer tty.Close()
+
+	if IsTerminal(tty) == false {
+		return nil, ErrNotTerminal
+	}
+
+	_, err = MakeRaw(tty)
+	if err != nil {
+		return nil, err
+	}
+
 	c.Stdout = tty
 	c.Stdin = tty
 	c.Stderr = tty
