@@ -16,13 +16,8 @@ func Start(c *exec.Cmd) (pty *os.File, err error) {
 	}
 	defer tty.Close()
 
-	if IsTerminal(tty) == false {
+	if IsTerminal(pty) == false {
 		return nil, ErrNotTerminal
-	}
-
-	_, err = MakeRaw(tty)
-	if err != nil {
-		return nil, err
 	}
 
 	c.Stdout = tty
@@ -35,4 +30,14 @@ func Start(c *exec.Cmd) (pty *os.File, err error) {
 		return nil, err
 	}
 	return pty, err
+}
+
+func StartRaw(c *exec.Cmd) (pty *os.File, oldState *State, err error) {
+	pty, err = Start(c)
+	oldState, err = MakeRaw(pty)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return pty, oldState, nil
 }

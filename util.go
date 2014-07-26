@@ -66,7 +66,7 @@ func MakeRaw(t *os.File) (*State, error) {
 }
 
 // Restore restores the terminal connected to the given file descriptor to a
-// previous state. (note: not used, does not seem to be necessary)
+// previous state.
 func Restore(t *os.File, state *State) error {
 	_, _, err := syscall.Syscall(syscall.SYS_IOCTL, t.Fd(), ioctlWriteTermios, uintptr(unsafe.Pointer(&state.termios)))
 	return err
