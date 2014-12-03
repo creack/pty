@@ -7,11 +7,6 @@ import (
 	"unsafe"
 )
 
-var (
-	ioctl_TIOCGPTN   = uintptr(syscall.TIOCGPTN)   /* Get Pty Number (of pty-mux device) */
-	ioctl_TIOCSPTLCK = uintptr(syscall.TIOCSPTLCK) /* Lock/unlock Pty */
-)
-
 func open() (pty, tty *os.File, err error) {
 	p, err := os.OpenFile("/dev/ptmx", os.O_RDWR, 0)
 	if err != nil {
@@ -37,7 +32,7 @@ func open() (pty, tty *os.File, err error) {
 
 func ptsname(f *os.File) (string, error) {
 	var n _C_uint
-	err := ioctl(f.Fd(), ioctl_TIOCGPTN, uintptr(unsafe.Pointer(&n)))
+	err := ioctl(f.Fd(), uintptr(syscall.TIOCGPTN), uintptr(unsafe.Pointer(&n)))
 	if err != nil {
 		return "", err
 	}
@@ -47,5 +42,5 @@ func ptsname(f *os.File) (string, error) {
 func unlockpt(f *os.File) error {
 	var u _C_int
 	// use TIOCSPTLCK with a zero valued arg to clear the slave pty lock
-	return ioctl(f.Fd(), ioctl_TIOCSPTLCK, uintptr(unsafe.Pointer(&u)))
+	return ioctl(f.Fd(), uintptr(syscall.TIOCSPTLCK), uintptr(unsafe.Pointer(&u)))
 }
