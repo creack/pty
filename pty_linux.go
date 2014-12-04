@@ -32,7 +32,7 @@ func open() (pty, tty *os.File, err error) {
 
 func ptsname(f *os.File) (string, error) {
 	var n _C_uint
-	err := ioctl(f.Fd(), uintptr(syscall.TIOCGPTN), uintptr(unsafe.Pointer(&n)))
+	err := ioctl(f.Fd(), syscall.TIOCGPTN, uintptr(unsafe.Pointer(&n)))
 	if err != nil {
 		return "", err
 	}
@@ -42,5 +42,5 @@ func ptsname(f *os.File) (string, error) {
 func unlockpt(f *os.File) error {
 	var u _C_int
 	// use TIOCSPTLCK with a zero valued arg to clear the slave pty lock
-	return ioctl(f.Fd(), uintptr(syscall.TIOCSPTLCK), uintptr(unsafe.Pointer(&u)))
+	return ioctl(f.Fd(), syscall.TIOCSPTLCK, uintptr(unsafe.Pointer(&u)))
 }
