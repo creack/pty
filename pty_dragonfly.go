@@ -3,9 +3,9 @@ package pty
 import (
 	"errors"
 	"os"
+	"strings"
 	"syscall"
 	"unsafe"
-	"strings"
 )
 
 // same code as pty_darwin.go
@@ -37,15 +37,14 @@ func open() (pty, tty *os.File, err error) {
 	return p, t, nil
 }
 
-
 func grantpt(f *os.File) error {
-        _, err := isptmaster(f.Fd())
-        return err
+	_, err := isptmaster(f.Fd())
+	return err
 }
 
 func unlockpt(f *os.File) error {
-        _, err := isptmaster(f.Fd())
-        return err
+	_, err := isptmaster(f.Fd())
+	return err
 }
 
 func isptmaster(fd uintptr) (bool, error) {
@@ -55,12 +54,12 @@ func isptmaster(fd uintptr) (bool, error) {
 
 var (
 	emptyFiodgnameArg fiodgnameArg
-	ioctl_FIODNAME   = _IOW('f', 120, unsafe.Sizeof(emptyFiodgnameArg))
+	ioctl_FIODNAME    = _IOW('f', 120, unsafe.Sizeof(emptyFiodgnameArg))
 )
 
 func ptsname(f *os.File) (string, error) {
 	name := make([]byte, _C_SPECNAMELEN)
-	fa := fiodgnameArg {Name: (*byte)(unsafe.Pointer(&name[0])), Len: _C_SPECNAMELEN, Pad_cgo_0: [4]byte{0,0,0,0}}
+	fa := fiodgnameArg{Name: (*byte)(unsafe.Pointer(&name[0])), Len: _C_SPECNAMELEN, Pad_cgo_0: [4]byte{0, 0, 0, 0}}
 
 	err := ioctl(f.Fd(), ioctl_FIODNAME, uintptr(unsafe.Pointer(&fa)))
 	if err != nil {
@@ -69,7 +68,7 @@ func ptsname(f *os.File) (string, error) {
 
 	for i, c := range name {
 		if c == 0 {
-                        s := "/dev/" + string(name[:i])
+			s := "/dev/" + string(name[:i])
 			return strings.Replace(s, "ptm", "pts", -1), nil
 		}
 	}
