@@ -2,7 +2,7 @@
 // cgo -godefs types.go
 
 // +build linux
-// +build mips mipsle
+// +build mips mipsle mips64 mips64le
 
 package pty
 
