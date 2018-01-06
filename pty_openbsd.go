@@ -1,7 +1,6 @@
 package pty
 
 import (
-	"C"
 	"os"
 	"syscall"
 	"unsafe"
@@ -23,8 +22,7 @@ func open() (pty, tty *os.File, err error) {
 	defer p.Close()
 
 	var ptm ptmget
-	err = ioctl(p.Fd(), uintptr(ioctl_PTMGET), uintptr(unsafe.Pointer(&ptm)))
-	if err != nil {
+	if err := ioctl(p.Fd(), uintptr(ioctl_PTMGET), uintptr(unsafe.Pointer(&ptm))); err != nil {
 		return nil, nil, err
 	}
 

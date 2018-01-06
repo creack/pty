@@ -3,6 +3,7 @@
 package pty
 
 /*
+#include <sys/time.h>
 #include <stdlib.h>
 #include <sys/tty.h>
 */
