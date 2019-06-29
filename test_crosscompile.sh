@@ -31,7 +31,7 @@ cross freebsd   amd64 386 arm
 cross netbsd    amd64 386 arm
 cross openbsd   amd64 386
 cross dragonfly amd64
-#cross solaris   amd64 # Should work once we merge in #64.
+cross solaris   amd64
 
 # Not expected to work but should still compile.
 cross windows amd64 386 arm
