@@ -45,7 +45,6 @@ if ! hash docker; then
     return
 fi
 
-#linux/riscv # Should work once we merge #81.
-#echo2 "Build for linux."
-#echo2 "  - linux/riscv"
-#docker build -t test -f Dockerfile.riscv .
+echo2 "Build for linux."
+echo2 "  - linux/riscv"
+docker build -t test -f Dockerfile.riscv .
