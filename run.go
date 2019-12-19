@@ -45,7 +45,7 @@ func StartWithSize(c *exec.Cmd, sz *Winsize) (pty *os.File, err error) {
 	if c.SysProcAttr == nil {
 		c.SysProcAttr = &syscall.SysProcAttr{}
 	}
-	c.SysProcAttr.Setctty = true
+	c.SysProcAttr.Setctty = false
 	c.SysProcAttr.Setsid = true
 	c.SysProcAttr.Ctty = int(tty.Fd())
 	err = c.Start()

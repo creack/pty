@@ -8,7 +8,7 @@ import (
 )
 
 func open() (pty, tty *os.File, err error) {
-	pFD, err := syscall.Open("/dev/ptmx", syscall.O_RDWR|syscall.O_CLOEXEC, 0)
+	pFD, err := syscall.Open("/dev/ptmx", syscall.O_RDWR|syscall.O_CLOEXEC|syscall.O_NOCTTY, 0)
 	if err != nil {
 		return nil, nil, err
 	}
