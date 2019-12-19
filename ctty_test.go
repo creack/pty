@@ -43,9 +43,13 @@ func testDaemon(command string, args ...string) (*testCmd, error) {
 	return &testCmd{Cmd: cmd, stdoutPipe: stdoutPipe}, nil
 }
 
-func grepCmd() ([]byte, error) {
+func testExec() ([]byte, error) {
+	_ = os.Setenv("forked_TestDaemonizedPTY", "test_fork_noctty_cmd")
+	defer func() { _ = os.Unsetenv("forked_TestDaemonizedPTY") }()
+
 	// Create a command with "grep".
-	c := exec.Command("grep", "bar")
+	c := exec.Command(os.Args[0], os.Args[1:]...)
+	c.Env = os.Environ()
 
 	// Start the command in a pty.
 	f, err := pty.Start(c)
@@ -53,15 +57,6 @@ func grepCmd() ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("pty.Start: %w", err)
 	}
-
-	// Send some data to grep and signal the end with EOT (ctrl-d).
-	go func() {
-		// Best effort.
-		_, _ = f.Write([]byte("foo\n"))
-		_, _ = f.Write([]byte("bar\n"))
-		_, _ = f.Write([]byte("baz\n"))
-		_, _ = f.Write([]byte{4}) // EOT.
-	}()
 
 	// Return the output of grep.
 	buf, err := ioutil.ReadAll(f)
@@ -77,12 +72,16 @@ func grepCmd() ([]byte, error) {
 
 func init() {
 	// If the binary is ran with that env variable, we are running the daemonized noctty test.
-	if os.Getenv("forked_TestDaemonizedPTY") == "test_fork_noctty" {
-		buf, err := grepCmd()
+	if forkedEnv := os.Getenv("forked_TestDaemonizedPTY"); forkedEnv == "test_fork_noctty" {
+		buf, err := testExec()
 		if err != nil {
-			log.Fatalf("grepCmd: %s", err)
+			log.Fatalf("testCmd: %s", err)
 		}
 		fmt.Printf("%s", buf)
+		os.Exit(0)
+	} else if forkedEnv == "test_fork_noctty_cmd" {
+		// If we have this env, we are running a "regular" exec test.
+		fmt.Printf("OK!")
 		os.Exit(0)
 	}
 }
@@ -90,6 +89,8 @@ func init() {
 // Global fork lock to make sure the test runs only once at a time.
 var testDaemonizePTYForkLock sync.Mutex
 
+// NOCTTY test:
+// Start a daemon which starts a command with a pty.
 func TestDaemonizedPTY(t *testing.T) {
 	// Lock the test to avoid issues with fork.
 	testDaemonizePTYForkLock.Lock()
@@ -97,7 +98,7 @@ func TestDaemonizedPTY(t *testing.T) {
 
 	// Set an env variable to tell the daemonized child to run the proper test.
 	_ = os.Setenv("forked_TestDaemonizedPTY", "test_fork_noctty")
-	defer os.Unsetenv("forked_TestDaemonizedPTY")
+	defer func() { _ = os.Unsetenv("forked_TestDaemonizedPTY") }()
 
 	// Re-run the current binary in daemon mode (no ctty).
 	cmd, err := testDaemon(os.Args[0], os.Args[1:]...)
@@ -110,7 +111,7 @@ func TestDaemonizedPTY(t *testing.T) {
 		t.Fatalf("Read: %s.\n", err)
 	}
 	// Assert result.
-	if expect, got := "foo\r\nbar\r\nbaz\r\nbar\r\n", string(buf); expect != got {
+	if expect, got := "OK!", string(buf); expect != got {
 		t.Fatalf("Unexpected result.\nExpect:\t%q\nGot:\t%q\n", expect, got)
 	}
 }
