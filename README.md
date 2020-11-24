@@ -1,6 +1,6 @@
 # pty
 
-Pty is a Go package for using unix pseudo-terminals.
+Pty is a Go package for using unix pseudo-terminals and windows ConPty.
 
 ## Install
 
