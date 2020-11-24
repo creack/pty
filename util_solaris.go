@@ -1,9 +1,6 @@
-//
-
 package pty
 
 import (
-	"os"
 	"golang.org/x/sys/unix"
 )
 
@@ -21,7 +18,7 @@ type Winsize struct {
 }
 
 // GetsizeFull returns the full terminal size description.
-func GetsizeFull(t *os.File) (size *Winsize, err error) {
+func GetsizeFull(t FdHolder) (size *Winsize, err error) {
 	var wsz *unix.Winsize
 	wsz, err = unix.IoctlGetWinsize(int(t.Fd()), TIOCGWINSZ)
 
@@ -33,7 +30,7 @@ func GetsizeFull(t *os.File) (size *Winsize, err error) {
 }
 
 // Get Windows Size
-func Getsize(t *os.File) (rows, cols int, err error) {
+func Getsize(t FdHolder) (rows, cols int, err error) {
 	var wsz *unix.Winsize
 	wsz, err = unix.IoctlGetWinsize(int(t.Fd()), TIOCGWINSZ)
 
@@ -45,7 +42,7 @@ func Getsize(t *os.File) (rows, cols int, err error) {
 }
 
 // Setsize resizes t to s.
-func Setsize(t *os.File, ws *Winsize) error {
+func Setsize(t FdHolder, ws *Winsize) error {
 	wsz := unix.Winsize{ws.Rows, ws.Cols, ws.X, ws.Y}
 	return unix.IoctlSetWinsize(int(t.Fd()), TIOCSWINSZ, &wsz)
 }

@@ -1,10 +1,9 @@
-// +build !windows,!solaris
-
 package pty
 
 import (
-	"syscall"
 	"unsafe"
+
+	"golang.org/x/sys/windows"
 )
 
 // InheritSize applies the terminal size of pty to tty. This should be run
@@ -24,14 +23,21 @@ func InheritSize(pty Pty, tty Tty) error {
 
 // Setsize resizes t to s.
 func Setsize(t FdHolder, ws *Winsize) error {
-	return windowRectCall(ws, t.Fd(), syscall.TIOCSWINSZ)
+	_, _, err := resizePseudoConsole.Call(
+		t.Fd(),
+		uintptr(unsafe.Pointer(&windows.Coord{X: int16(ws.Cols), Y: int16(ws.Rows)})),
+	)
+	return err
 }
 
 // GetsizeFull returns the full terminal size description.
 func GetsizeFull(t FdHolder) (size *Winsize, err error) {
-	var ws Winsize
-	err = windowRectCall(&ws, t.Fd(), syscall.TIOCGWINSZ)
-	return &ws, err
+	var info windows.ConsoleScreenBufferInfo
+	_, _, err = getConsoleScreenBufferInfo.Call(t.Fd(), uintptr(unsafe.Pointer(&info)))
+	return &Winsize{
+		Rows: uint16(info.Window.Bottom - info.Window.Top + 1),
+		Cols: uint16(info.Window.Right - info.Window.Left + 1),
+	}, err
 }
 
 // Getsize returns the number of rows (lines) and cols (positions
@@ -41,23 +47,9 @@ func Getsize(t FdHolder) (rows, cols int, err error) {
 	return int(ws.Rows), int(ws.Cols), err
 }
 
-// Winsize describes the terminal size.
 type Winsize struct {
 	Rows uint16 // ws_row: Number of rows (in cells)
 	Cols uint16 // ws_col: Number of columns (in cells)
-	X    uint16 // ws_xpixel: Width in pixels
-	Y    uint16 // ws_ypixel: Height in pixels
-}
-
-func windowRectCall(ws *Winsize, fd, a2 uintptr) error {
-	_, _, errno := syscall.Syscall(
-		syscall.SYS_IOCTL,
-		fd,
-		a2,
-		uintptr(unsafe.Pointer(ws)),
-	)
-	if errno != 0 {
-		return syscall.Errno(errno)
-	}
-	return nil
+	X    uint16 // ws_xpixel: Width in pixels (not supported)
+	Y    uint16 // ws_ypixel: Height in pixels (not supported)
 }
