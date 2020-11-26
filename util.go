@@ -57,7 +57,7 @@ func windowRectCall(ws *Winsize, fd, a2 uintptr) error {
 		uintptr(unsafe.Pointer(ws)),
 	)
 	if errno != 0 {
-		return syscall.Errno(errno)
+		return errno
 	}
 	return nil
 }
