@@ -24,7 +24,7 @@ func open() (pty, tty *os.File, err error) {
 		return nil, nil, err
 	}
 
-	if err := unlockpt(p); err != nil {
+	if err = unlockpt(p); err != nil {
 		return nil, nil, err
 	}
 

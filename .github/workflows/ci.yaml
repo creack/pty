@@ -1,0 +1,62 @@
+name: CI
+
+# yamllint disable-line rule:truthy
+on:
+  check_run:
+    types:
+    - rerequested
+    - requested_action
+  pull_request: {}
+  push:
+    branches:
+    - master
+    tags:
+    - v*
+
+env:
+  GO111MODULE: "on"
+
+defaults:
+  run:
+    # NOTE: when testing on windows, we may need non-cygwin environment
+    #       so we need to change shell when doing actual testing on windows
+    shell: bash
+
+jobs:
+  unit-test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        go:
+        - 1.13.x
+        - 1.14.x
+        - 1.15.x
+        os:
+        - ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: ${{ matrix.go }}
+
+    - name: Lint
+      uses: golangci/golangci-lint-action@v2
+      with:
+        version: v1.33
+
+    - name: Ensure tidy gomod
+      run: |
+        go mod download -x
+        go mod tidy
+        if ! git diff --exit-code
+        then
+          echo "go mod not tidy"
+          exit 1
+        fi
+
+    - name: Test crossbuild
+      run: |
+        sh test_crosscompile.sh
