@@ -4,9 +4,13 @@ Pty is a Go package for using unix pseudo-terminals.
 
 ## Install
 
-    go get github.com/creack/pty
+```sh
+go get github.com/creack/pty
+```
 
-## Example
+## Examples
+
+Note that those examples are for demonstration purpose only, to showcase how to use the library. They are not meant to be used in any kind of production environment.
 
 ### Command
 
@@ -78,6 +82,7 @@ func test() error {
                 }
         }()
         ch <- syscall.SIGWINCH // Initial resize.
+        defer func() { signal.Stop(ch); close(ch) }() // Cleanup signals when done.
 
         // Set stdin in raw mode.
         oldState, err := term.MakeRaw(int(os.Stdin.Fd()))
@@ -87,6 +92,7 @@ func test() error {
         defer func() { _ = term.Restore(int(os.Stdin.Fd()), oldState) }() // Best effort.
 
         // Copy stdin to the pty and the pty to stdout.
+        // NOTE: The goroutine will keep reading until the next keystroke before returning.
         go func() { _, _ = io.Copy(ptmx, os.Stdin) }()
         _, _ = io.Copy(os.Stdout, ptmx)
 
