@@ -1,4 +1,5 @@
-// +build ignore
+//go:build ignore
+//+build ignore
 
 package pty
 
@@ -11,5 +12,7 @@ import "C"
 
 type ptmget C.struct_ptmget
 
-var ioctl_TIOCPTSNAME = C.TIOCPTSNAME
-var ioctl_TIOCGRANTPT = C.TIOCGRANTPT
+var (
+	ioctl_TIOCPTSNAME = C.TIOCPTSNAME
+	ioctl_TIOCGRANTPT = C.TIOCGRANTPT
+)
