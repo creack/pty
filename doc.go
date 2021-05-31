@@ -27,8 +27,8 @@ type (
 		// Fd intended to resize Tty of child process in current process
 		FdHolder
 
-		// string writer is used to identify Pty and Tty
-		io.StringWriter
+		// WriteString is only used to identify Pty and Tty
+		WriteString(s string) (n int, err error)
 		io.ReadWriteCloser
 	}
 
