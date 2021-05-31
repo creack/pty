@@ -3,8 +3,24 @@ package pty
 import (
 	"os"
 	"unsafe"
+)
 
-	"golang.org/x/sys/windows"
+// types from golang.org/x/sys/windows
+type (
+	// copy of https://pkg.go.dev/golang.org/x/sys/windows#Coord
+	windowsCoord struct {
+		X int16
+		Y int16
+	}
+
+	// copy of https://pkg.go.dev/golang.org/x/sys/windows#ConsoleScreenBufferInfo
+	windowsConsoleScreenBufferInfo struct {
+		Size              Coord
+		CursorPosition    Coord
+		Attributes        uint16
+		Window            SmallRect
+		MaximumWindowSize Coord
+	}
 )
 
 // Setsize resizes t to s.
@@ -16,7 +32,7 @@ func Setsize(t FdHolder, ws *Winsize) error {
 
 	_, _, err = resizePseudoConsole.Call(
 		t.Fd(),
-		uintptr(unsafe.Pointer(&windows.Coord{X: int16(ws.Cols), Y: int16(ws.Rows)})),
+		uintptr(unsafe.Pointer(&windowsCoord{X: int16(ws.Cols), Y: int16(ws.Rows)})),
 	)
 	return err
 }
@@ -28,7 +44,7 @@ func GetsizeFull(t FdHolder) (size *Winsize, err error) {
 		return nil, os.NewSyscallError("GetConsoleScreenBufferInfo", err)
 	}
 
-	var info windows.ConsoleScreenBufferInfo
+	var info windowsConsoleScreenBufferInfo
 	_, _, err = getConsoleScreenBufferInfo.Call(t.Fd(), uintptr(unsafe.Pointer(&info)))
 	return &Winsize{
 		Rows: uint16(info.Window.Bottom - info.Window.Top + 1),

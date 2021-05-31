@@ -7,8 +7,6 @@ import (
 	"os"
 	"syscall"
 	"unsafe"
-
-	"golang.org/x/sys/windows"
 )
 
 var (
@@ -48,7 +46,7 @@ func open() (_ Pty, _ Tty, err error) {
 
 	var (
 		consoleHandle syscall.Handle
-		defaultSize   = &windows.Coord{X: 80, Y: 30}
+		defaultSize   = &windowsCoord{X: 80, Y: 30}
 	)
 
 	// https://docs.microsoft.com/en-us/windows/console/createpseudoconsole
