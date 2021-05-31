@@ -7,21 +7,6 @@ import (
 	"golang.org/x/sys/windows"
 )
 
-// InheritSize applies the terminal size of pty to tty. This should be run
-// in a signal handler for syscall.SIGWINCH to automatically resize the tty when
-// the pty receives a window size change notification.
-func InheritSize(pty Pty, tty Tty) error {
-	size, err := GetsizeFull(pty)
-	if err != nil {
-		return err
-	}
-	err = Setsize(tty, size)
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
 // Setsize resizes t to s.
 func Setsize(t FdHolder, ws *Winsize) error {
 	resizePseudoConsole, err := kernel32DLL.FindProc("ResizePseudoConsole")
@@ -56,11 +41,4 @@ func GetsizeFull(t FdHolder) (size *Winsize, err error) {
 func Getsize(t FdHolder) (rows, cols int, err error) {
 	ws, err := GetsizeFull(t)
 	return int(ws.Rows), int(ws.Cols), err
-}
-
-type Winsize struct {
-	Rows uint16 // ws_row: Number of rows (in cells)
-	Cols uint16 // ws_col: Number of columns (in cells)
-	X    uint16 // ws_xpixel: Width in pixels (not supported)
-	Y    uint16 // ws_ypixel: Height in pixels (not supported)
 }
