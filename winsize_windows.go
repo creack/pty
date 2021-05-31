@@ -51,10 +51,3 @@ func GetsizeFull(t FdHolder) (size *Winsize, err error) {
 		Cols: uint16(info.Window.Right - info.Window.Left + 1),
 	}, err
 }
-
-// Getsize returns the number of rows (lines) and cols (positions
-// in each line) in terminal t.
-func Getsize(t FdHolder) (rows, cols int, err error) {
-	ws, err := GetsizeFull(t)
-	return int(ws.Rows), int(ws.Cols), err
-}
