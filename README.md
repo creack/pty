@@ -12,6 +12,8 @@ go get github.com/creack/pty
 
 Note that those examples are for demonstration purpose only, to showcase how to use the library. They are not meant to be used in any kind of production environment.
 
+__NOTE:__ This package requires `ConPty` support on windows platform, please make sure your windows system meet [these requirements](https://docs.microsoft.com/en-us/windows/console/createpseudoconsole#requirements)
+
 ### Command
 
 ```go
