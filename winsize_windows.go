@@ -13,13 +13,21 @@ type (
 		Y int16
 	}
 
+	// copy of https://pkg.go.dev/golang.org/x/sys/windows#SmallRect
+	windowsSmallRect struct {
+		Left   int16
+		Top    int16
+		Right  int16
+		Bottom int16
+	}
+
 	// copy of https://pkg.go.dev/golang.org/x/sys/windows#ConsoleScreenBufferInfo
 	windowsConsoleScreenBufferInfo struct {
-		Size              Coord
-		CursorPosition    Coord
+		Size              windowsCoord
+		CursorPosition    windowsCoord
 		Attributes        uint16
-		Window            SmallRect
-		MaximumWindowSize Coord
+		Window            windowsSmallRect
+		MaximumWindowSize windowsCoord
 	}
 )
 
