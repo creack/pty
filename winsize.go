@@ -16,8 +16,8 @@ func InheritSize(pty Pty, tty Tty) error {
 	if err != nil {
 		return err
 	}
-	err = Setsize(tty, size)
-	if err != nil {
+
+	if err := Setsize(tty, size); err != nil {
 		return err
 	}
 	return nil
