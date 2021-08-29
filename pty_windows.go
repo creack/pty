@@ -1,5 +1,5 @@
 //go:build windows
-//+build windows
+// +build windows
 
 package pty
 
@@ -10,16 +10,26 @@ import (
 )
 
 var (
-	kernel32DLL *syscall.DLL
-)
+	// NOTE(security): as noted by the comment of syscall.NewLazyDLL and syscall.LoadDLL
+	// 	user need to call internal/syscall/windows/sysdll.Add("kernel32.dll") to make sure
+	//  the kernel32.dll is loaded from windows system path
+	//
+	// ref: https://pkg.go.dev/syscall@go1.13?GOOS=windows#LoadDLL
+	kernel32DLL = syscall.NewLazyDLL("kernel32.dll")
 
-func init() {
-	var err error
-	kernel32DLL, err = syscall.LoadDLL("kernel32.dll")
-	if err != nil {
-		panic(err)
-	}
-}
+	// https://docs.microsoft.com/en-us/windows/console/createpseudoconsole
+	createPseudoConsole = kernel32DLL.NewProc("CreatePseudoConsole")
+	closePseudoConsole  = kernel32DLL.NewProc("ClosePseudoConsole")
+
+	deleteProcThreadAttributeList     = kernel32DLL.NewProc("DeleteProcThreadAttributeList")
+	initializeProcThreadAttributeList = kernel32DLL.NewProc("InitializeProcThreadAttributeList")
+
+	// https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute
+	updateProcThreadAttribute = kernel32DLL.NewProc("UpdateProcThreadAttribute")
+
+	resizePseudoConsole        = kernel32DLL.NewProc("ResizePseudoConsole")
+	getConsoleScreenBufferInfo = kernel32DLL.NewProc("GetConsoleScreenBufferInfo")
+)
 
 func open() (_ Pty, _ Tty, err error) {
 	pr, consoleW, err := os.Pipe()
@@ -49,11 +59,9 @@ func open() (_ Pty, _ Tty, err error) {
 		defaultSize   = &windowsCoord{X: 80, Y: 30}
 	)
 
-	// https://docs.microsoft.com/en-us/windows/console/createpseudoconsole
-
-	createPseudoConsole, err := kernel32DLL.FindProc("CreatePseudoConsole")
+	err = createPseudoConsole.Find()
 	if err != nil {
-		return nil, nil, os.NewSyscallError("CreatePseudoConsole", err)
+		return nil, nil, err
 	}
 
 	r1, _, err := createPseudoConsole.Call(
@@ -69,10 +77,10 @@ func open() (_ Pty, _ Tty, err error) {
 	}
 
 	return &WindowsPty{
-			handle:    uintptr(consoleHandle),
-			r:         pr,
-			w:         pw,
-			consoleR:  consoleR,
+			handle:   uintptr(consoleHandle),
+			r:        pr,
+			w:        pw,
+			consoleR: consoleR,
 			consoleW: consoleW,
 		}, &WindowsTty{
 			handle: uintptr(consoleHandle),
@@ -121,9 +129,9 @@ func (p *WindowsPty) Close() error {
 	_ = p.consoleR.Close()
 	_ = p.consoleW.Close()
 
-	closePseudoConsole, err := kernel32DLL.FindProc("ClosePseudoConsole")
+	err := closePseudoConsole.Find()
 	if err != nil {
-		return os.NewSyscallError("ClosePseudoConsole", err)
+		return err
 	}
 
 	_, _, err = closePseudoConsole.Call(p.handle)

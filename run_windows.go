@@ -1,5 +1,5 @@
 //go:build windows
-//+build windows
+// +build windows
 
 package pty
 
@@ -77,11 +77,6 @@ func StartWithAttrs(c *exec.Cmd, sz *Winsize, attrs *syscall.SysProcAttr) (_ Pty
 }
 
 func createExtendedStartupInfo(consoleHandle syscall.Handle) (_ *startupInfoEx, err error) {
-	deleteProcThreadAttributeList, err := kernel32DLL.FindProc("DeleteProcThreadAttributeList")
-	if err != nil {
-		return nil, os.NewSyscallError("DeleteProcThreadAttributeList", err)
-	}
-
 	// append console handler to new process
 	var (
 		attrBufSize uint64
@@ -91,9 +86,9 @@ func createExtendedStartupInfo(consoleHandle syscall.Handle) (_ *startupInfoEx, 
 	si.startupInfo.Cb = uint32(unsafe.Sizeof(si))
 
 	// get size of attr list
-	initializeProcThreadAttributeList, err := kernel32DLL.FindProc("InitializeProcThreadAttributeList")
+	err = initializeProcThreadAttributeList.Find()
 	if err != nil {
-		return nil, os.NewSyscallError("InitializeProcThreadAttributeList", err)
+		return nil, err
 	}
 
 	r1, _, err := initializeProcThreadAttributeList.Call(
@@ -127,10 +122,9 @@ func createExtendedStartupInfo(consoleHandle syscall.Handle) (_ *startupInfoEx, 
 		return nil, os.NewSyscallError("InitializeProcThreadAttributeList (create)", err)
 	}
 
-	// https://docs.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-updateprocthreadattribute
-	updateProcThreadAttribute, err := kernel32DLL.FindProc("UpdateProcThreadAttribute")
+	err = updateProcThreadAttribute.Find()
 	if err != nil {
-		return nil, os.NewSyscallError("UpdateProcThreadAttribute", err)
+		return nil, err
 	}
 
 	r1, _, err = updateProcThreadAttribute.Call(
@@ -144,7 +138,9 @@ func createExtendedStartupInfo(consoleHandle syscall.Handle) (_ *startupInfoEx, 
 	)
 	if r1 == 0 {
 		// false
-		_, _, _ = deleteProcThreadAttributeList.Call(uintptr(si.lpAttrList))
+		if deleteProcThreadAttributeList.Find() == nil {
+			_, _, _ = deleteProcThreadAttributeList.Call(uintptr(si.lpAttrList))
+		}
 		return nil, os.NewSyscallError("UpdateProcThreadAttribute", err)
 	}
 
@@ -277,7 +273,7 @@ func startProcess(name string, argv []string, attr *os.ProcAttr, consoleHandle s
 	runtime.KeepAlive(attr)
 
 	if e != nil {
-		return nil, &os.PathError{"fork/exec", name, e}
+		return nil, &os.PathError{Op: "fork/exec", Path: name, Err: e}
 	}
 
 	return newProcess(pid, h), nil
@@ -291,11 +287,6 @@ var zeroSysProcAttr syscall.SysProcAttr
 
 // copied from syscall.StartProcess, add consoleHandle arg
 func syscallStartProcess(argv0 string, argv []string, attr *syscall.ProcAttr, consoleHandle syscall.Handle) (pid int, handle uintptr, err error) {
-	deleteProcThreadAttributeList, err := kernel32DLL.FindProc("DeleteProcThreadAttributeList")
-	if err != nil {
-		return 0, 0, os.NewSyscallError("DeleteProcThreadAttributeList", err)
-	}
-
 	if len(argv0) == 0 {
 		return 0, 0, syscall.EWINDOWS
 	}
@@ -385,7 +376,9 @@ func syscallStartProcess(argv0 string, argv []string, attr *syscall.ProcAttr, co
 	}
 	// add finalizer for attribute list cleanup, best effort
 	runtime.SetFinalizer(si, func(si *startupInfoEx) {
-		_, _, _ = deleteProcThreadAttributeList.Call(uintptr(si.lpAttrList))
+		if deleteProcThreadAttributeList.Find() == nil {
+			_, _, _ = deleteProcThreadAttributeList.Call(uintptr(si.lpAttrList))
+		}
 	})
 
 	si.startupInfo.Flags = syscall.STARTF_USESTDHANDLES

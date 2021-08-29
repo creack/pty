@@ -1,7 +1,6 @@
 package pty
 
 import (
-	"os"
 	"unsafe"
 )
 
@@ -33,9 +32,9 @@ type (
 
 // Setsize resizes t to ws.
 func Setsize(t FdHolder, ws *Winsize) error {
-	resizePseudoConsole, err := kernel32DLL.FindProc("ResizePseudoConsole")
+	err := resizePseudoConsole.Find()
 	if err != nil {
-		return os.NewSyscallError("ResizePseudoConsole", err)
+		return err
 	}
 
 	_, _, err = resizePseudoConsole.Call(
@@ -47,9 +46,9 @@ func Setsize(t FdHolder, ws *Winsize) error {
 
 // GetsizeFull returns the full terminal size description.
 func GetsizeFull(t FdHolder) (size *Winsize, err error) {
-	getConsoleScreenBufferInfo, err := kernel32DLL.FindProc("GetConsoleScreenBufferInfo")
+	err = getConsoleScreenBufferInfo.Find()
 	if err != nil {
-		return nil, os.NewSyscallError("GetConsoleScreenBufferInfo", err)
+		return nil, err
 	}
 
 	var info windowsConsoleScreenBufferInfo
