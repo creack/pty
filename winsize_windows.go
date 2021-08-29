@@ -31,7 +31,7 @@ type (
 	}
 )
 
-// Setsize resizes t to s.
+// Setsize resizes t to ws.
 func Setsize(t FdHolder, ws *Winsize) error {
 	resizePseudoConsole, err := kernel32DLL.FindProc("ResizePseudoConsole")
 	if err != nil {
