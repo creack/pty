@@ -156,15 +156,15 @@ func createExtendedStartupInfo(consoleHandle syscall.Handle) (_ *startupInfoEx, 
 // once the command exits.
 func start(c *cmd, consoleHandle syscall.Handle) error {
 	if c.lookPathErr != nil {
-		c.closeDescriptors(c.closeAfterStart)
-		c.closeDescriptors(c.closeAfterWait)
+		_cmd_closeDescriptors(c, c.closeAfterStart)
+		_cmd_closeDescriptors(c, c.closeAfterWait)
 		return c.lookPathErr
 	}
 	if runtime.GOOS == "windows" {
 		lp, err := lookExtensions(c.Path, c.Dir)
 		if err != nil {
-			c.closeDescriptors(c.closeAfterStart)
-			c.closeDescriptors(c.closeAfterWait)
+			_cmd_closeDescriptors(c, c.closeAfterStart)
+			_cmd_closeDescriptors(c, c.closeAfterWait)
 			return err
 		}
 		c.Path = lp
@@ -175,8 +175,8 @@ func start(c *cmd, consoleHandle syscall.Handle) error {
 	if c.ctx != nil {
 		select {
 		case <-c.ctx.Done():
-			c.closeDescriptors(c.closeAfterStart)
-			c.closeDescriptors(c.closeAfterWait)
+			_cmd_closeDescriptors(c, c.closeAfterStart)
+			_cmd_closeDescriptors(c, c.closeAfterWait)
 			return c.ctx.Err()
 		default:
 		}
@@ -187,32 +187,32 @@ func start(c *cmd, consoleHandle syscall.Handle) error {
 	//for _, setupFd := range []F{c.stdin, c.stdout, c.stderr} {
 	//	fd, err := setupFd()
 	//	if err != nil {
-	//		c.closeDescriptors(c.closeAfterStart)
-	//		c.closeDescriptors(c.closeAfterWait)
+	//		closeDescriptors(c, c.closeAfterStart)
+	//		closeDescriptors(c, c.closeAfterWait)
 	//		return err
 	//	}
 	//	c.childFiles = append(c.childFiles, fd)
 	//}
 	//c.childFiles = append(c.childFiles, c.ExtraFiles...)
 
-	envv, err := c.envv()
+	envv, err := _cmd_envv(c)
 	if err != nil {
 		return err
 	}
 
-	c.Process, err = startProcess(c.Path, c.argv(), &os.ProcAttr{
+	c.Process, err = startProcess(c.Path, _cmd_argv(c), &os.ProcAttr{
 		Dir:   c.Dir,
 		Files: c.childFiles,
 		Env:   addCriticalEnv(dedupEnv(envv)),
 		Sys:   c.SysProcAttr,
 	}, consoleHandle)
 	if err != nil {
-		c.closeDescriptors(c.closeAfterStart)
-		c.closeDescriptors(c.closeAfterWait)
+		_cmd_closeDescriptors(c, c.closeAfterStart)
+		_cmd_closeDescriptors(c, c.closeAfterWait)
 		return err
 	}
 
-	c.closeDescriptors(c.closeAfterStart)
+	_cmd_closeDescriptors(c, c.closeAfterStart)
 
 	// Don't allocate the channel unless there are goroutines to fire.
 	if len(c.goroutine) > 0 {

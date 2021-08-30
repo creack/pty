@@ -1,5 +1,5 @@
 //go:build windows
-//+build windows
+// +build windows
 
 package pty
 
@@ -112,14 +112,14 @@ type cmd struct {
 	waitDone        chan struct{}
 }
 
-//go:linkname (*cmd).closeDescriptors os/exec.(*Cmd).closeDescriptors
-func (c *cmd) closeDescriptors(closers []io.Closer)
+//go:linkname _cmd_closeDescriptors os/exec.(*Cmd).closeDescriptors
+func _cmd_closeDescriptors(c *cmd, closers []io.Closer)
 
-//go:linkname (*cmd).envv os/exec.(*Cmd).envv
-func (c *cmd) envv() ([]string, error)
+//go:linkname _cmd_envv os/exec.(*Cmd).envv
+func _cmd_envv(c *cmd) ([]string, error)
 
-//go:linkname (*cmd).argv os/exec.(*Cmd).argv
-func (c *cmd) argv() []string
+//go:linkname _cmd_argv os/exec.(*Cmd).argv
+func _cmd_argv(c *cmd) []string
 
 //go:linkname lookExtensions os/exec.lookExtensions
 func lookExtensions(path, dir string) (string, error)
