@@ -54,18 +54,14 @@ func open() (_ Pty, _ Tty, err error) {
 		}
 	}()
 
-	var (
-		consoleHandle syscall.Handle
-		defaultSize   = &windowsCoord{X: 80, Y: 30}
-	)
-
 	err = createPseudoConsole.Find()
 	if err != nil {
 		return nil, nil, err
 	}
 
+	var consoleHandle syscall.Handle
 	r1, _, err := createPseudoConsole.Call(
-		uintptr(unsafe.Pointer(defaultSize)),    // size: default 80x30 window
+		(windowsCoord{X: 80, Y: 30}).Pack(),     // size: default 80x30 window
 		consoleR.Fd(),                           // console input
 		consoleW.Fd(),                           // console output
 		0,                                       // console flags, currently only PSEUDOCONSOLE_INHERIT_CURSOR supported
