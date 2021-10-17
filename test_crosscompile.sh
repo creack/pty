@@ -32,9 +32,7 @@ cross netbsd    amd64 386 arm arm64
 cross openbsd   amd64 386 arm arm64
 cross dragonfly amd64
 cross solaris   amd64
-
-# Not expected to work but should still compile.
-cross windows amd64 386 arm
+cross windows   amd64 386 arm
 
 # TODO: Fix compilation error on openbsd/arm.
 # TODO: Merge the solaris PR.
