@@ -11,19 +11,23 @@ on:
 jobs:
   test:
     runs-on: ${{ matrix.platform }}
-    name: "Test (${{ matrix.platform }})"
+    name: "Test go ${{ matrix.go_version }} on ${{ matrix.platform }}"
 
     strategy:
         matrix:
           platform:
             - ubuntu-latest
             - macos-latest
+          go_version:
+            - 1.13.x
+            - 1.17.x
+            - 1.18.x
 
     steps:
-    - name: Set up Go 1.17.x
+    - name: Set up Go ${{ matrix.go_version }}
       uses: actions/setup-go@v2
       with:
-        go-version: 1.17.x
+        go-version: ${{ matrix.go_version }}
         check-latest: true
     - name: Checkout repo
       uses: actions/checkout@v2
