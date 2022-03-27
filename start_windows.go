@@ -4,7 +4,6 @@
 package pty
 
 import (
-	"errors"
 	"os"
 	"os/exec"
 )
