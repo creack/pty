@@ -14,19 +14,26 @@ jobs:
     runs-on: ${{ matrix.platform }}
 
     strategy:
-        matrix:
-          platform:
-            - ubuntu-latest
-            - macos-latest
-          go_version:
-            # Test the oldest release we targeted and the two currently supported releases (https://go.dev/doc/devel/release#policy)
-            - 1.6.x
-            - 1.17.x
-            - 1.18.x
+      matrix:
+        platform:
+          - ubuntu-latest
+          - macos-latest
+        go_version:
+          # Test the two currently supported releases (https://go.dev/doc/devel/release#policy)
+          - 1.17.x
+          - 1.18.x
+        include:
+          # Also sanity test a very old release on linux
+          - platform: ubuntu-latest
+            go_version: 1.6.x
 
     steps:
+      # 1.6 doesn't seem to default GOPATH to anything, so we set it explicitly here
+    - name: Set GOPATH
+      run: echo "GOPATH=$HOME/go" >> $GITHUB_ENV
+
     - name: Set up Go ${{ matrix.go_version }}
-      uses: actions/setup-go@v2
+      uses: actions/setup-go@v3
       with:
         go-version: ${{ matrix.go_version }}
         check-latest: true
