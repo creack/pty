@@ -3,6 +3,7 @@ package pty
 import (
 	"bytes"
 	"io"
+	"os"
 	"testing"
 )
 
@@ -62,6 +63,44 @@ func TestName(t *testing.T) {
 	err = pty.Close()
 	if err != nil {
 		t.Errorf("Unexpected error from pty Close: %s", err)
+	}
+}
+
+// TestOpenByName ensures that the name associated with the tty is valid
+// and can be opened and used if passed by file name (rather than passing
+// the existing open file descriptor).
+func TestOpenByName(t *testing.T) {
+	t.Parallel()
+
+	pty, tty, err := Open()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pty.Close()
+	defer tty.Close()
+
+	ttyFile, err := os.OpenFile(tty.Name(), os.O_RDWR, 0600)
+	if err != nil {
+		t.Fatalf("Failed to open tty file: %v", err)
+	}
+	defer ttyFile.Close()
+
+	// Ensure we can write to the newly opened tty file and read on the pty.
+	text := []byte("ping")
+	n, err := ttyFile.Write(text)
+	if err != nil {
+		t.Errorf("Unexpected error from Write: %s", err)
+	}
+	if n != len(text) {
+		t.Errorf("Unexpected count returned from Write, got %d expected %d", n, len(text))
+	}
+
+	buffer := make([]byte, len(text))
+	if err := readBytes(pty, buffer); err != nil {
+		t.Errorf("Unexpected error from readBytes: %s", err)
+	}
+	if !bytes.Equal(text, buffer) {
+		t.Errorf("Unexpected result returned from Read, got %v expected %v", buffer, text)
 	}
 }
 
