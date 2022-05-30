@@ -40,6 +40,16 @@ func open() (pty, tty *os.File, err error) {
 	if err != nil {
 		return nil, nil, err
 	}
+
+	var termios syscall.Termios
+	if err := ioctl(uintptr(pFD), syscall.TIOCGETA, uintptr(unsafe.Pointer(&termios))); err != nil {
+		return nil, nil, err
+	}
+	termios.Lflag &^= syscall.ICANON
+	if err := ioctl(uintptr(pFD), syscall.TIOCSETA, uintptr(unsafe.Pointer(&termios))); err != nil {
+		return nil, nil, err
+	}
+
 	return p, t, nil
 }
 
