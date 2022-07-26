@@ -23,11 +23,11 @@ import (
 // support for startupInfo on windows, so we have to rewrite some internal
 // logic for windows while keep its behavior compatible with other platforms.
 
-// WindowExecCmd represents an external command being prepared or run.
+// windowExecCmd represents an external command being prepared or run.
 //
 // A cmd cannot be reused after calling its Run, Output or CombinedOutput
 // methods.
-type WindowExecCmd struct {
+type windowExecCmd struct {
 	cmd           *exec.Cmd
 	waitCalled    bool
 	consoleHandle syscall.Handle
@@ -38,14 +38,14 @@ type WindowExecCmd struct {
 
 var errProcessNotStarted = errors.New("exec: process has not started yet")
 
-func (c *WindowExecCmd) close() error {
+func (c *windowExecCmd) close() error {
 	c.attrList.Delete()
 	_ = c.conPty.Close()
 	_ = c.tty.Close()
 	return nil
 }
 
-func (c *WindowExecCmd) Run() error {
+func (c *windowExecCmd) Run() error {
 	err := c.Start()
 	if err != nil {
 		return err
@@ -54,7 +54,7 @@ func (c *WindowExecCmd) Run() error {
 	return c.Wait()
 }
 
-func (c *WindowExecCmd) Wait() error {
+func (c *windowExecCmd) Wait() error {
 	if c.cmd.Process == nil {
 		return errProcessNotStarted
 	}
@@ -83,52 +83,19 @@ func (c *WindowExecCmd) Wait() error {
 	return nil
 }
 
-func (c *WindowExecCmd) StdinPipe() (io.WriteCloser, error) {
-	if c.cmd.Stdin != nil {
-		return nil, errors.New("exec: Stdin already set")
-	}
-	if c.cmd.Process != nil {
-		return nil, errors.New("exec: StdinPipe after process started")
-	}
-
-	if c.conPty != nil {
-		return c.conPty.InputPipe(), nil
-	}
-
+func (c *windowExecCmd) StdinPipe() (io.WriteCloser, error) {
 	return nil, ErrUnsupported
 }
 
-func (c *WindowExecCmd) StdoutPipe() (io.ReadCloser, error) {
-	if c.cmd.Stdout != nil {
-		return nil, errors.New("exec: Stdout already set")
-	}
-	if c.cmd.Process != nil {
-		return nil, errors.New("exec: StdoutPipe after process started")
-	}
-
-	if c.conPty != nil {
-		return c.conPty.OutputPipe(), nil
-	}
-
+func (c *windowExecCmd) StdoutPipe() (io.ReadCloser, error) {
 	return nil, ErrUnsupported
 }
 
-func (c *WindowExecCmd) StderrPipe() (io.ReadCloser, error) {
-	if c.cmd.Stderr != nil {
-		return nil, errors.New("exec: Stderr already set")
-	}
-	if c.cmd.Process != nil {
-		return nil, errors.New("exec: StderrPipe after process started")
-	}
-
-	if c.conPty != nil {
-		return c.conPty.OutputPipe(), nil
-	}
-
+func (c *windowExecCmd) StderrPipe() (io.ReadCloser, error) {
 	return nil, ErrUnsupported
 }
 
-func (c *WindowExecCmd) Output() ([]byte, error) {
+func (c *windowExecCmd) Output() ([]byte, error) {
 	if c.cmd.Stdout != nil {
 		return nil, errors.New("exec: Stdout already set")
 	}
@@ -140,7 +107,7 @@ func (c *WindowExecCmd) Output() ([]byte, error) {
 	return stdout.Bytes(), err
 }
 
-func (c *WindowExecCmd) CombinedOutput() ([]byte, error) {
+func (c *windowExecCmd) CombinedOutput() ([]byte, error) {
 	if c.cmd.Stdout != nil {
 		return nil, errors.New("exec: Stdout already set")
 	}
@@ -154,7 +121,7 @@ func (c *WindowExecCmd) CombinedOutput() ([]byte, error) {
 	return b.Bytes(), err
 }
 
-func (c *WindowExecCmd) argv() []string {
+func (c *windowExecCmd) argv() []string {
 	if len(c.cmd.Args) > 0 {
 		return c.cmd.Args
 	}

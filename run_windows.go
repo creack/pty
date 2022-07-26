@@ -59,7 +59,7 @@ func StartWithAttrs(c *exec.Cmd, sz *Winsize, attrs *syscall.SysProcAttr) (_ Pty
 
 	// do not use os/exec.Start since we need to append console handler to startup info
 
-	w := WindowExecCmd{
+	w := windowExecCmd{
 		cmd:           c,
 		waitCalled:    false,
 		consoleHandle: syscall.Handle(tty.Fd()),
@@ -83,7 +83,7 @@ func StartWithAttrs(c *exec.Cmd, sz *Winsize, attrs *syscall.SysProcAttr) (_ Pty
 //
 // The Wait method will return the exit code and release associated resources
 // once the command exits.
-func (c *WindowExecCmd) Start() error {
+func (c *windowExecCmd) Start() error {
 	if c.cmd.Process != nil {
 		return errors.New("exec: already started")
 	}
