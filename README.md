@@ -1,8 +1,4 @@
-
 # pty
-
-[![Crosscompile](https://github.com/photostorm/pty/actions/workflows/crosscompile.yml/badge.svg)](https://github.com/photostorm/pty/actions/workflows/crosscompile.yml)
-[![Test](https://github.com/photostorm/pty/actions/workflows/test.yml/badge.svg)](https://github.com/photostorm/pty/actions/workflows/test.yml)
 
 Pty is a Go package for using unix pseudo-terminals and windows ConPty.
 
