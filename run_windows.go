@@ -33,8 +33,8 @@ func StartWithSize(c *exec.Cmd, sz *Winsize) (Pty, error) {
 //
 // This should generally not be needed. Used in some edge cases where it is needed to create a pty
 // without a controlling terminal.
-func StartWithAttrs(c *exec.Cmd, sz *Winsize, attrs *syscall.SysProcAttr) (_ Pty, err error) {
-	pty, tty, err := open()
+func StartWithAttrs(c *exec.Cmd, sz *Winsize, attrs *syscall.SysProcAttr) (Pty, error) {
+	pty, _, err := open()
 	if err != nil {
 		return nil, err
 	}
@@ -42,7 +42,6 @@ func StartWithAttrs(c *exec.Cmd, sz *Winsize, attrs *syscall.SysProcAttr) (_ Pty
 	defer func() {
 		// unlike unix command exec, do not close tty unless error happened
 		if err != nil {
-			_ = tty.Close()
 			_ = pty.Close()
 		}
 	}()
@@ -60,16 +59,13 @@ func StartWithAttrs(c *exec.Cmd, sz *Winsize, attrs *syscall.SysProcAttr) (_ Pty
 	// do not use os/exec.Start since we need to append console handler to startup info
 
 	w := windowExecCmd{
-		cmd:           c,
-		waitCalled:    false,
-		consoleHandle: syscall.Handle(tty.Fd()),
-		tty:           tty.(*WindowsTty),
-		conPty:        pty.(*WindowsPty),
+		cmd:        c,
+		waitCalled: false,
+		conPty:     pty.(*WindowsPty),
 	}
 
 	err = w.Start()
 	if err != nil {
-		_ = tty.Close()
 		_ = pty.Close()
 		return nil, err
 	}
@@ -176,7 +172,7 @@ func (c *windowExecCmd) Start() error {
 	// Need EXTENDED_STARTUPINFO_PRESENT as we're making use of the attribute list field.
 	flags := sys.CreationFlags | uint32(windows.CREATE_UNICODE_ENVIRONMENT) | windows.EXTENDED_STARTUPINFO_PRESENT
 
-	c.attrList, err = windows.NewProcThreadAttributeList(3)
+	c.attrList, err = windows.NewProcThreadAttributeList(1)
 	if err != nil {
 		return fmt.Errorf("failed to initialize process thread attribute list: %w", err)
 	}

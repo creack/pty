@@ -109,14 +109,6 @@ func (p *WindowsPty) WriteString(s string) (int, error) {
 	return p.w.WriteString(s)
 }
 
-func (p *WindowsPty) InputPipe() *os.File {
-	return p.w
-}
-
-func (p *WindowsPty) OutputPipe() *os.File {
-	return p.r
-}
-
 func (p *WindowsPty) UpdateProcThreadAttribute(attrList *windows.ProcThreadAttributeListContainer) error {
 	var err error
 

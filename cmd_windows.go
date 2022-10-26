@@ -28,12 +28,10 @@ import (
 // A cmd cannot be reused after calling its Run, Output or CombinedOutput
 // methods.
 type windowExecCmd struct {
-	cmd           *exec.Cmd
-	waitCalled    bool
-	consoleHandle syscall.Handle
-	tty           *WindowsTty
-	conPty        *WindowsPty
-	attrList      *windows.ProcThreadAttributeListContainer
+	cmd        *exec.Cmd
+	waitCalled bool
+	conPty     *WindowsPty
+	attrList   *windows.ProcThreadAttributeListContainer
 }
 
 var errProcessNotStarted = errors.New("exec: process has not started yet")
@@ -41,7 +39,7 @@ var errProcessNotStarted = errors.New("exec: process has not started yet")
 func (c *windowExecCmd) close() error {
 	c.attrList.Delete()
 	_ = c.conPty.Close()
-	_ = c.tty.Close()
+
 	return nil
 }
 
