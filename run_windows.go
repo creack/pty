@@ -66,7 +66,6 @@ func StartWithAttrs(c *exec.Cmd, sz *Winsize, attrs *syscall.SysProcAttr) (Pty, 
 
 	err = w.Start()
 	if err != nil {
-		_ = pty.Close()
 		return nil, err
 	}
 
