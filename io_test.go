@@ -7,7 +7,9 @@ import (
 	"testing"
 
 	"context"
+	"errors"
 	"os"
+	"runtime"
 	"sync"
 	"time"
 )
@@ -28,7 +30,11 @@ func TestReadDeadline(t *testing.T) {
 
 	err := ptmx.SetDeadline(time.Now().Add(timeout / 10))
 	if err != nil {
-		t.Fatalf("error: set deadline: %v\n", err)
+		if errors.Is(err, os.ErrNoDeadline) {
+			t.Skipf("deadline is not supported on %s/%s", runtime.GOOS, runtime.GOARCH)
+		} else {
+			t.Fatalf("error: set deadline: %v\n", err)
+		}
 	}
 
 	var buf = make([]byte, 1)
@@ -80,6 +86,7 @@ func prepare(t *testing.T) (ptmx *os.File, done func()) {
 	t.Cleanup(func() { _ = pts.Close() })
 
 	ctx, done := context.WithCancel(context.Background())
+	t.Cleanup(done)
 	go func() {
 		select {
 		case <-ctx.Done():
