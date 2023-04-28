@@ -1,7 +1,6 @@
-//go:build !windows
-// +build !windows
+//go:build !windows && go1.12
+// +build !windows,go1.12
 
-//
 package pty
 
 import "os"
