@@ -72,6 +72,13 @@ func TestReadClose(t *testing.T) {
 
 // Open pty and setup watchdogs for graceful and not so graceful failure modes
 func prepare(t *testing.T) (ptmx *os.File, done func()) {
+	if runtime.GOOS == "darwin" {
+		t.Log("creack/pty uses blocking i/o on darwin intentionally:")
+		t.Log("> https://github.com/creack/pty/issues/52")
+		t.Log("> https://github.com/creack/pty/pull/53")
+		t.Log("> https://github.com/golang/go/issues/22099")
+		t.SkipNow()
+	}
 
 	// Due to data race potential in (*os.File).Fd()
 	// we should never run these two tests in parallel
