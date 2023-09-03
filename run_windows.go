@@ -225,6 +225,13 @@ func (c *windowExecCmd) Start() error {
 	if err != nil {
 		return err
 	}
+	
+	go c.waitProcess(c.cmd.Process)
 
 	return nil
+}
+
+func (c *windowExecCmd) waitProcess(process *os.Process) {
+	_, _ = process.Wait()
+	_ = c.close()
 }

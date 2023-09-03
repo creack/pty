@@ -133,6 +133,7 @@ func (p *WindowsPty) Close() error {
 	}
 
 	_, _, err = closePseudoConsole.Call(uintptr(p.handle))
+
 	return err
 }
 

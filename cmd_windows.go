@@ -4,9 +4,6 @@
 package pty
 
 import (
-	"bytes"
-	"errors"
-	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -34,89 +31,11 @@ type windowExecCmd struct {
 	attrList   *windows.ProcThreadAttributeListContainer
 }
 
-var errProcessNotStarted = errors.New("exec: process has not started yet")
-
 func (c *windowExecCmd) close() error {
 	c.attrList.Delete()
 	_ = c.conPty.Close()
 
 	return nil
-}
-
-func (c *windowExecCmd) Run() error {
-	err := c.Start()
-	if err != nil {
-		return err
-	}
-
-	return c.Wait()
-}
-
-func (c *windowExecCmd) Wait() error {
-	if c.cmd.Process == nil {
-		return errProcessNotStarted
-	}
-
-	var err error
-
-	if c.waitCalled {
-		return errors.New("exec: wait was already called")
-	}
-
-	c.waitCalled = true
-	c.cmd.ProcessState, err = c.cmd.Process.Wait()
-	if err != nil {
-		return err
-	}
-
-	err = c.close()
-	if err != nil {
-		return err
-	}
-
-	if !c.cmd.ProcessState.Success() {
-		return &exec.ExitError{ProcessState: c.cmd.ProcessState}
-	}
-
-	return nil
-}
-
-func (c *windowExecCmd) StdinPipe() (io.WriteCloser, error) {
-	return nil, ErrUnsupported
-}
-
-func (c *windowExecCmd) StdoutPipe() (io.ReadCloser, error) {
-	return nil, ErrUnsupported
-}
-
-func (c *windowExecCmd) StderrPipe() (io.ReadCloser, error) {
-	return nil, ErrUnsupported
-}
-
-func (c *windowExecCmd) Output() ([]byte, error) {
-	if c.cmd.Stdout != nil {
-		return nil, errors.New("exec: Stdout already set")
-	}
-
-	var stdout bytes.Buffer
-	c.cmd.Stdout = &stdout
-
-	err := c.Run()
-	return stdout.Bytes(), err
-}
-
-func (c *windowExecCmd) CombinedOutput() ([]byte, error) {
-	if c.cmd.Stdout != nil {
-		return nil, errors.New("exec: Stdout already set")
-	}
-	if c.cmd.Stderr != nil {
-		return nil, errors.New("exec: Stderr already set")
-	}
-	var b bytes.Buffer
-	c.cmd.Stdout = &b
-	c.cmd.Stderr = &b
-	err := c.Run()
-	return b.Bytes(), err
 }
 
 func (c *windowExecCmd) argv() []string {
