@@ -8,14 +8,15 @@ import (
 	"unsafe"
 )
 
-// types from golang.org/x/sys/windows
-// copy of https://pkg.go.dev/golang.org/x/sys/windows#Coord
+// Types from golang.org/x/sys/windows.
+
+// Ref: https://pkg.go.dev/golang.org/x/sys/windows#Coord
 type windowsCoord struct {
 	X int16
 	Y int16
 }
 
-// copy of https://pkg.go.dev/golang.org/x/sys/windows#SmallRect
+// Ref: https://pkg.go.dev/golang.org/x/sys/windows#SmallRect
 type windowsSmallRect struct {
 	Left   int16
 	Top    int16
@@ -23,7 +24,7 @@ type windowsSmallRect struct {
 	Bottom int16
 }
 
-// copy of https://pkg.go.dev/golang.org/x/sys/windows#ConsoleScreenBufferInfo
+// Ref: https://pkg.go.dev/golang.org/x/sys/windows#ConsoleScreenBufferInfo
 type windowsConsoleScreenBufferInfo struct {
 	Size              windowsCoord
 	CursorPosition    windowsCoord
@@ -38,15 +39,13 @@ func (c windowsCoord) Pack() uintptr {
 
 // Setsize resizes t to ws.
 func Setsize(t FdHolder, ws *Winsize) error {
-	var r0 uintptr
-	var err error
-
-	err = resizePseudoConsole.Find()
-	if err != nil {
+	if err := resizePseudoConsole.Find(); err != nil {
 		return err
 	}
 
-	r0, _, err = resizePseudoConsole.Call(
+	// TODO: As we removed the use of `.Fd()` on Unix (https://github.com/creack/pty/pull/168), we need to check if we should do the same here.
+	// TODO: Check if it is expected to ignore `err` here.
+	r0, _, _ := resizePseudoConsole.Call(
 		t.Fd(),
 		(windowsCoord{X: int16(ws.Cols), Y: int16(ws.Rows)}).Pack(),
 	)
@@ -64,15 +63,13 @@ func Setsize(t FdHolder, ws *Winsize) error {
 
 // GetsizeFull returns the full terminal size description.
 func GetsizeFull(t FdHolder) (size *Winsize, err error) {
-	err = getConsoleScreenBufferInfo.Find()
-	if err != nil {
+	if err := getConsoleScreenBufferInfo.Find(); err != nil {
 		return nil, err
 	}
 
 	var info windowsConsoleScreenBufferInfo
-	var r0 uintptr
-
-	r0, _, err = getConsoleScreenBufferInfo.Call(t.Fd(), uintptr(unsafe.Pointer(&info)))
+	// TODO: Check if it is expected to ignore `err` here.
+	r0, _, _ := getConsoleScreenBufferInfo.Call(t.Fd(), uintptr(unsafe.Pointer(&info)))
 	if int32(r0) < 0 {
 		if r0&0x1fff0000 == 0x00070000 {
 			r0 &= 0xffff

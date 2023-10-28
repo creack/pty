@@ -14,6 +14,7 @@ import (
 )
 
 const (
+	// Ref: https://pkg.go.dev/golang.org/x/sys/windows#pkg-constants
 	PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE = 0x20016
 )
 
@@ -28,11 +29,11 @@ type WindowsTty struct {
 }
 
 var (
-	// NOTE(security): as noted by the comment of syscall.NewLazyDLL and syscall.LoadDLL
-	// 	user need to call internal/syscall/windows/sysdll.Add("kernel32.dll") to make sure
-	//  the kernel32.dll is loaded from windows system path
+	// NOTE(security): As noted by the comment of syscall.NewLazyDLL and syscall.LoadDLL
+	//                 user need to call internal/syscall/windows/sysdll.Add("kernel32.dll") to make sure
+	//                 the kernel32.dll is loaded from windows system path.
 	//
-	// ref: https://pkg.go.dev/syscall@go1.13?GOOS=windows#LoadDLL
+	// Ref: https://pkg.go.dev/syscall@go1.13?GOOS=windows#LoadDLL
 	kernel32DLL = windows.NewLazyDLL("kernel32.dll")
 
 	// https://docs.microsoft.com/en-us/windows/console/createpseudoconsole
@@ -51,6 +52,7 @@ func open() (_ Pty, _ Tty, err error) {
 
 	consoleR, pw, err := os.Pipe()
 	if err != nil {
+		// Closing everything. Best effort.
 		_ = consoleW.Close()
 		_ = pr.Close()
 		return nil, nil, err
@@ -58,9 +60,13 @@ func open() (_ Pty, _ Tty, err error) {
 
 	var consoleHandle windows.Handle
 
-	err = procCreatePseudoConsole(windows.Handle(consoleR.Fd()), windows.Handle(consoleW.Fd()),
-		0, &consoleHandle)
-	if err != nil {
+	// TODO: As we removed the use of `.Fd()` on Unix (https://github.com/creack/pty/pull/168), we need to check if we should do the same here.
+	if err := procCreatePseudoConsole(
+		windows.Handle(consoleR.Fd()),
+		windows.Handle(consoleW.Fd()),
+		0,
+		&consoleHandle); err != nil {
+		// Closing everything. Best effort.
 		_ = consoleW.Close()
 		_ = pr.Close()
 		_ = pw.Close()
@@ -68,15 +74,12 @@ func open() (_ Pty, _ Tty, err error) {
 		return nil, nil, err
 	}
 
-	// These pipes can be closed here without any worry
-	err = consoleW.Close()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to close pseudo console handle: %w", err)
+	// These pipes can be closed here without any worry.
+	if err := consoleW.Close(); err != nil {
+		return nil, nil, fmt.Errorf("failed to close pseudo console write handle: %w", err)
 	}
-
-	err = consoleR.Close()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to close pseudo console handle: %w", err)
+	if err := consoleR.Close(); err != nil {
+		return nil, nil, fmt.Errorf("failed to close pseudo console read handle: %w", err)
 	}
 
 	return &WindowsPty{
@@ -111,9 +114,7 @@ func (p *WindowsPty) WriteString(s string) (int, error) {
 }
 
 func (p *WindowsPty) UpdateProcThreadAttribute(attrList *windows.ProcThreadAttributeListContainer) error {
-	var err error
-
-	if err = attrList.Update(
+	if err := attrList.Update(
 		PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE,
 		unsafe.Pointer(p.handle),
 		unsafe.Sizeof(p.handle),
@@ -125,16 +126,15 @@ func (p *WindowsPty) UpdateProcThreadAttribute(attrList *windows.ProcThreadAttri
 }
 
 func (p *WindowsPty) Close() error {
+	// Best effort.
 	_ = p.r.Close()
 	_ = p.w.Close()
 
-	err := closePseudoConsole.Find()
-	if err != nil {
+	if err := closePseudoConsole.Find(); err != nil {
 		return err
 	}
 
-	_, _, err = closePseudoConsole.Call(uintptr(p.handle))
-
+	_, _, err := closePseudoConsole.Call(uintptr(p.handle))
 	return err
 }
 
@@ -159,7 +159,7 @@ func (t *WindowsTty) Write(p []byte) (int, error) {
 }
 
 func (t *WindowsTty) Close() error {
-	_ = t.r.Close()
+	_ = t.r.Close() // Best effort.
 	return t.w.Close()
 }
 
@@ -168,20 +168,17 @@ func (t *WindowsTty) SetDeadline(value time.Time) error {
 }
 
 func procCreatePseudoConsole(hInput windows.Handle, hOutput windows.Handle, dwFlags uint32, consoleHandle *windows.Handle) error {
-	var r0 uintptr
-	var err error
-
-	err = createPseudoConsole.Find()
-	if err != nil {
+	if err := createPseudoConsole.Find(); err != nil {
 		return err
 	}
 
-	r0, _, err = createPseudoConsole.Call(
-		(windowsCoord{X: 80, Y: 30}).Pack(),    // size: default 80x30 window
-		uintptr(hInput),                        // console input
-		uintptr(hOutput),                       // console output
-		uintptr(dwFlags),                       // console flags, currently only PSEUDOCONSOLE_INHERIT_CURSOR supported
-		uintptr(unsafe.Pointer(consoleHandle)), // console handler value return
+	// TODO: Check if it is expected to ignore `err` here.
+	r0, _, _ := createPseudoConsole.Call(
+		(windowsCoord{X: 80, Y: 30}).Pack(),    // Size: default 80x30 window.
+		uintptr(hInput),                        // Console input.
+		uintptr(hOutput),                       // Console output.
+		uintptr(dwFlags),                       // Console flags, currently only PSEUDOCONSOLE_INHERIT_CURSOR supported.
+		uintptr(unsafe.Pointer(consoleHandle)), // Console handler value return.
 	)
 
 	if int32(r0) < 0 {

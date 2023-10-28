@@ -40,23 +40,23 @@ func StartWithAttrs(c *exec.Cmd, sz *Winsize, attrs *syscall.SysProcAttr) (Pty, 
 	}
 
 	defer func() {
-		// unlike unix command exec, do not close tty unless error happened
+		// Unlike unix command exec, do not close tty unless error happened.
 		if err != nil {
-			_ = pty.Close()
+			_ = pty.Close() // Best effort.
 		}
 	}()
 
 	if sz != nil {
-		if err = Setsize(pty, sz); err != nil {
+		if err := Setsize(pty, sz); err != nil {
 			return nil, err
 		}
 	}
 
-	// unlike unix command exec, do not set stdin/stdout/stderr
+	// Unlike unix command exec, do not set stdin/stdout/stderr.
 
 	c.SysProcAttr = attrs
 
-	// do not use os/exec.Start since we need to append console handler to startup info
+	// Do not use os/exec.Start since we need to append console handler to startup info.
 
 	w := windowExecCmd{
 		cmd:        c,
@@ -64,8 +64,7 @@ func StartWithAttrs(c *exec.Cmd, sz *Winsize, attrs *syscall.SysProcAttr) (Pty, 
 		conPty:     pty.(*WindowsPty),
 	}
 
-	err = w.Start()
-	if err != nil {
+	if err := w.Start(); err != nil {
 		return nil, err
 	}
 
@@ -83,7 +82,7 @@ func (c *windowExecCmd) Start() error {
 		return errors.New("exec: already started")
 	}
 
-	var argv0 = c.cmd.Path
+	argv0 := c.cmd.Path
 	var argv0p *uint16
 	var argvp *uint16
 	var dirp *uint16
@@ -131,7 +130,7 @@ func (c *windowExecCmd) Start() error {
 
 	// Windows CreateProcess takes the command line as a single string:
 	// use attr.CmdLine if set, else build the command line by escaping
-	// and joining each argument with spaces
+	// and joining each argument with spaces.
 	if sys.CmdLine != "" {
 		cmdline = sys.CmdLine
 	} else {
@@ -225,7 +224,7 @@ func (c *windowExecCmd) Start() error {
 	if err != nil {
 		return err
 	}
-	
+
 	go c.waitProcess(c.cmd.Process)
 
 	return nil
