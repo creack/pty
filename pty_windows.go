@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"syscall"
+	"time"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -137,6 +138,10 @@ func (p *WindowsPty) Close() error {
 	return err
 }
 
+func (t *WindowsPty) SetDeadline(value time.Time) error {
+	return nil
+}
+
 func (t *WindowsTty) Name() string {
 	return t.r.Name()
 }
@@ -156,6 +161,10 @@ func (t *WindowsTty) Write(p []byte) (int, error) {
 func (t *WindowsTty) Close() error {
 	_ = t.r.Close()
 	return t.w.Close()
+}
+
+func (t *WindowsTty) SetDeadline(value time.Time) error {
+	return nil
 }
 
 func procCreatePseudoConsole(hInput windows.Handle, hOutput windows.Handle, dwFlags uint32, consoleHandle *windows.Handle) error {

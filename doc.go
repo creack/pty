@@ -4,6 +4,7 @@ package pty
 import (
 	"errors"
 	"io"
+	"time"
 )
 
 // ErrUnsupported is returned if a function is not
@@ -30,6 +31,8 @@ type Pty interface {
 
 	// WriteString is only used to identify Pty and Tty
 	WriteString(s string) (n int, err error)
+	SetDeadline(t time.Time) error
+
 	io.ReadWriteCloser
 }
 
@@ -41,6 +44,7 @@ type Tty interface {
 	FdHolder
 
 	Name() string
+	SetDeadline(t time.Time) error
 
 	io.ReadWriteCloser
 }

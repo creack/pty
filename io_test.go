@@ -4,13 +4,12 @@
 package pty
 
 import (
-	"testing"
-
 	"context"
 	"errors"
 	"os"
 	"runtime"
 	"sync"
+	"testing"
 	"time"
 )
 
@@ -71,7 +70,7 @@ func TestReadClose(t *testing.T) {
 }
 
 // Open pty and setup watchdogs for graceful and not so graceful failure modes
-func prepare(t *testing.T) (ptmx *os.File, done func()) {
+func prepare(t *testing.T) (ptmx Pty, done func()) {
 	if runtime.GOOS == "darwin" {
 		t.Log("creack/pty uses blocking i/o on darwin intentionally:")
 		t.Log("> https://github.com/creack/pty/issues/52")
