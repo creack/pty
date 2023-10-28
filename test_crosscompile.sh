@@ -45,16 +45,12 @@ if ! hash docker; then
   return
 fi
 
-echo2 "Build for linux."
-echo2 "  - linux/riscv"
-docker build -t creack-pty-test -f Dockerfile.riscv .
-
-# Golang dropped support for darwin 32bits since go1.15. Make sure the lib still compile with go1.18.2 on those archs.
+# Golang dropped support for darwin 32bits since go1.15. Make sure the lib still compile with go1.14 on those archs.
 echo2 "Build for darwin (32bits)."
 echo2 "  - darwin/386"
-docker build -t creack-pty-test -f Dockerfile.golang --build-arg=GOVERSION=1.18.2 --build-arg=GOOS=darwin --build-arg=GOARCH=386 .
+docker build -t creack-pty-test -f Dockerfile.golang --build-arg=GOVERSION=1.14 --build-arg=GOOS=darwin --build-arg=GOARCH=386 .
 echo2 "  - darwin/arm"
-docker build -t creack-pty-test -f Dockerfile.golang --build-arg=GOVERSION=1.18.2 --build-arg=GOOS=darwin --build-arg=GOARCH=arm .
+docker build -t creack-pty-test -f Dockerfile.golang --build-arg=GOVERSION=1.14 --build-arg=GOOS=darwin --build-arg=GOARCH=arm .
 
 # Run a single test for an old go version. Would be best with go1.0, but not available on Dockerhub.
 # Using 1.6 as it is the base version for the RISCV compiler.
