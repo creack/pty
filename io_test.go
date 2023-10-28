@@ -27,12 +27,14 @@ var mu sync.Mutex
 func TestReadDeadline(t *testing.T) {
 	ptmx, success := prepare(t)
 
-	err := ptmx.SetDeadline(time.Now().Add(timeout / 10))
-	if err != nil {
-		if errors.Is(err, os.ErrNoDeadline) {
-			t.Skipf("deadline is not supported on %s/%s", runtime.GOOS, runtime.GOARCH)
-		} else {
-			t.Fatalf("error: set deadline: %v\n", err)
+	if ptmxd, ok := ptmx.(DeadlineHolder); ok {
+		err := ptmxd.SetDeadline(time.Now().Add(timeout / 10))
+		if err != nil {
+			if errors.Is(err, os.ErrNoDeadline) {
+				t.Skipf("deadline is not supported on %s/%s", runtime.GOOS, runtime.GOARCH)
+			} else {
+				t.Fatalf("error: set deadline: %v\n", err)
+			}
 		}
 	}
 

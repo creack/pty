@@ -19,6 +19,10 @@ func Open() (Pty, Tty, error) {
 // FdHolder surfaces the Fd() method of the underlying handle.
 type FdHolder interface {
 	Fd() uintptr
+}
+
+// DeadlineHolder surfaces the SetDeadline() method to sets the read and write deadlines.
+type DeadlineHolder interface {
 	SetDeadline(t time.Time) error
 }
 
