@@ -1,9 +1,10 @@
+---
 name: Crosscompile
 
-on:
+"on":
   push:
     branches:
-    - master
+      - master
 
 jobs:
   test:
@@ -11,7 +12,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout repo
-      uses: actions/checkout@v2
-    - name: Run ./test_crosscompile.sh
-      run: ./test_crosscompile.sh
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Run ./test_crosscompile.sh
+        run: ./test_crosscompile.sh

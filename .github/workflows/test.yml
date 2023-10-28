@@ -1,12 +1,13 @@
+---
 name: Test
 
-on:
+"on":
   push:
     branches:
-    - master
+      - master
   pull_request:
     branches:
-    - master
+      - master
 
 jobs:
   test:
@@ -19,28 +20,33 @@ jobs:
           - ubuntu-latest
           - macos-latest
         go_version:
-          # Test the two currently supported releases (https://go.dev/doc/devel/release#policy)
-          - 1.17.x
-          - 1.18.x
+          # Test the two currently supported releases.
+          # (https://go.dev/doc/devel/release#policy).
+          - stable
+          - oldstable
         include:
-          # Also sanity test a very old release on linux
+          # Also sanity test a very old release on linux.
           - platform: ubuntu-latest
             go_version: 1.6.x
 
     steps:
-      # 1.6 doesn't seem to default GOPATH to anything, so we set it explicitly here
-    - name: Set GOPATH
-      run: echo "GOPATH=$HOME/go" >> $GITHUB_ENV
+      # 1.6 doesn't seem to default GOPATH to anything,
+      # so we set it explicitly here.
+      - if: ${{ matrix.go_version == '1.6.x' }}
+        name: Set GOPATH
+        run: echo "GOPATH=$HOME/go" >> $GITHUB_ENV
 
-    - name: Set up Go ${{ matrix.go_version }}
-      uses: actions/setup-go@v3
-      with:
-        go-version: ${{ matrix.go_version }}
-        check-latest: true
-    - name: Checkout repo
-      uses: actions/checkout@v2
+      - name: Set up Go ${{ matrix.go_version }}
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ matrix.go_version }}
+          check-latest: true
 
-    - name: Build
-      run: go build -v
-    - name: Test
-      run: go test -v
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: go build -v
+
+      - name: Test
+        run: go test -v
