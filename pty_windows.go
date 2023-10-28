@@ -34,7 +34,7 @@ var (
 	//                 the kernel32.dll is loaded from windows system path.
 	//
 	// Ref: https://pkg.go.dev/syscall@go1.13?GOOS=windows#LoadDLL
-	kernel32DLL = windows.NewLazyDLL("kernel32.dll")
+	kernel32DLL = windows.NewLazySystemDLL("kernel32.dll")
 
 	// https://docs.microsoft.com/en-us/windows/console/createpseudoconsole
 	createPseudoConsole = kernel32DLL.NewProc("CreatePseudoConsole")
@@ -138,8 +138,8 @@ func (p *WindowsPty) Close() error {
 	return err
 }
 
-func (t *WindowsPty) SetDeadline(value time.Time) error {
-	return nil
+func (p *WindowsPty) SetDeadline(value time.Time) error {
+	return os.ErrNoDeadline
 }
 
 func (t *WindowsTty) Name() string {
@@ -164,7 +164,7 @@ func (t *WindowsTty) Close() error {
 }
 
 func (t *WindowsTty) SetDeadline(value time.Time) error {
-	return nil
+	return os.ErrNoDeadline
 }
 
 func procCreatePseudoConsole(hInput windows.Handle, hOutput windows.Handle, dwFlags uint32, consoleHandle *windows.Handle) error {

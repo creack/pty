@@ -19,6 +19,7 @@ func Open() (Pty, Tty, error) {
 // FdHolder surfaces the Fd() method of the underlying handle.
 type FdHolder interface {
 	Fd() uintptr
+	SetDeadline(t time.Time) error
 }
 
 // Pty for terminal control in current process.
@@ -33,7 +34,6 @@ type Pty interface {
 
 	// WriteString is only used to identify Pty and Tty.
 	WriteString(s string) (n int, err error)
-	SetDeadline(t time.Time) error // TODO: Maybe move to FdHolder?
 
 	io.ReadWriteCloser
 }
@@ -47,7 +47,6 @@ type Tty interface {
 	FdHolder
 
 	Name() string
-	SetDeadline(t time.Time) error // TODO: Maybe move to FdHolder?
 
 	io.ReadWriteCloser
 }
