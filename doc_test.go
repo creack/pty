@@ -170,3 +170,47 @@ func TestReadWriteControls(t *testing.T) {
 	buffer = readN(t, pty, 9, "Unexpected error from pty Read")
 	assertBytes(t, []byte("pind^Hg\r\n"), buffer, "Unexpected result returned from pty Read")
 }
+
+// Make sure we can have multiple open ptys without mixing them up.
+func TestDistinctReadWriteText(t *testing.T) {
+	t.Parallel()
+
+	ptyA, ttyA := openClose(t)
+	ptyB, ttyB := openClose(t)
+
+	textA := []byte("ping")
+	textB := []byte("fizzz")
+
+	n, err := ttyA.Write(textA)
+	noError(t, err, "Unexpected error from tty Write A")
+	assert(t, n, len(textA), "Unexpected count returned from tty Write A")
+
+	n, err = ttyB.Write(textB)
+	noError(t, err, "Unexpected error from tty Write B")
+	assert(t, n, len(textB), "Unexpected count returned from tty Write B")
+
+	buffer := readN(t, ptyA, len(textA), "Unexpected error from pty Read A")
+	assertBytes(t, textA, buffer, "Unexpected result returned from pty Read B")
+
+	buffer = readN(t, ptyB, len(textB), "Unexpected error from pty Read B")
+	assertBytes(t, textB, buffer, "Unexpected result returned from pty Read B")
+}
+
+// Make sure we can resize individual ptys without side effect on others.
+func TestDistinctSetsize(t *testing.T) {
+	t.Parallel()
+
+	_, ttyA := openClose(t)
+	_, ttyB := openClose(t)
+
+	noError(t, Setsize(ttyA, &Winsize{Rows: 20}), "Unexpected error from Setsize A")
+	noError(t, Setsize(ttyB, &Winsize{Rows: 40}), "Unexpected error from Setsize B")
+
+	tsizeA, err := GetsizeFull(ttyA)
+	noError(t, err, "Unexpected error from tty GetsizeFull A")
+	tsizeB, err := GetsizeFull(ttyB)
+	noError(t, err, "Unexpected error from tty GetsizeFull B")
+
+	assert(t, 20, tsizeA.Rows, "Unexpected Getsize Rows result after Setsize A")
+	assert(t, 40, tsizeB.Rows, "Unexpected Getsize Rows result after Setsize B")
+}
