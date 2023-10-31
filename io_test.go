@@ -18,7 +18,7 @@ const (
 	timeout        = time.Second
 )
 
-//nolint:gochecknoglobals // Expected global lock to avodi potential race on (*os.File).Fd().
+//nolint:gochecknoglobals // Expected global lock to avoid potential race on (*os.File).Fd().
 var glTestFdLock sync.Mutex
 
 // Check that SetDeadline() works for ptmx.
