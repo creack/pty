@@ -8,13 +8,13 @@ import "os"
 func ioctl(f *os.File, cmd, ptr uintptr) error {
 	sc, e := f.SyscallConn()
 	if e != nil {
-		return ioctl_inner(f.Fd(), cmd, ptr) // fall back to blocking io (old behavior)
+		return ioctlInner(f.Fd(), cmd, ptr) // Fall back to blocking io (old behavior).
 	}
 
 	ch := make(chan error, 1)
 	defer close(ch)
 
-	e = sc.Control(func(fd uintptr) { ch <- ioctl_inner(fd, cmd, ptr) })
+	e = sc.Control(func(fd uintptr) { ch <- ioctlInner(fd, cmd, ptr) })
 	if e != nil {
 		return e
 	}

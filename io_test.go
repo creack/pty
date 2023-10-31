@@ -18,12 +18,15 @@ const (
 	timeout        = time.Second
 )
 
+//nolint:gochecknoglobals // Expected global lock to avodi potential race on (*os.File).Fd().
 var glTestFdLock sync.Mutex
 
 // Check that SetDeadline() works for ptmx.
 // Outstanding Read() calls must be interrupted by deadline.
 //
 // https://github.com/creack/pty/issues/162
+//
+//nolint:paralleltest // Potential in (*os.File).Fd().
 func TestReadDeadline(t *testing.T) {
 	ptmx, success := prepare(t)
 
@@ -51,6 +54,8 @@ func TestReadDeadline(t *testing.T) {
 //
 // https://github.com/creack/pty/issues/114
 // https://github.com/creack/pty/issues/88
+//
+//nolint:paralleltest // Potential in (*os.File).Fd().
 func TestReadClose(t *testing.T) {
 	ptmx, success := prepare(t)
 
@@ -73,7 +78,7 @@ func TestReadClose(t *testing.T) {
 	}
 }
 
-// Open pty and setup watchdogs for graceful and not so graceful failure modes
+// Open pty and setup watchdogs for graceful and not so graceful failure modes.
 func prepare(t *testing.T) (ptmx *os.File, done func()) {
 	t.Helper()
 
@@ -104,18 +109,18 @@ func prepare(t *testing.T) (ptmx *os.File, done func()) {
 		case <-ctx.Done():
 			// ptmx.Read() did not block forever, yay!
 		case <-time.After(timeout):
-			if _, err := pts.Write([]byte{errMarker}); err != nil { // unblock ptmx.Read()
+			if _, err := pts.Write([]byte{errMarker}); err != nil { // Unblock ptmx.Read().
 				t.Errorf("Failed to write to pts: %s.", err)
 			}
 			t.Error("ptmx.Read() was not unblocked.")
-			done() // cancel panic()
+			done() // Cancel panic().
 		}
 	}()
 	go func() {
 		select {
 		case <-ctx.Done():
 			// Test has either failed or succeeded; it definitely did not hang.
-		case <-time.After(timeout * 10 / 9): // timeout +11%
+		case <-time.After(timeout * 10 / 9): // Timeout + 11%.
 			panic("ptmx.Read() was not unblocked; avoid hanging forever.") // Just in case.
 		}
 	}()
