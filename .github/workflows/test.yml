@@ -48,5 +48,8 @@ jobs:
       - name: Build
         run: go build -v
 
-      - name: Test
+      # Skip tests for 1.6 as we use modern Go.
+      # If the main lib builds and tests pass on other versions, we are good.
+      - if: ${{ matrix.go_version != '1.6.x' }}
+        name: Test
         run: go test -v

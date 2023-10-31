@@ -1,68 +1,27 @@
 package pty
 
 import (
-	"bytes"
-	"io"
 	"os"
 	"testing"
 )
 
-// Will fill p from reader r
-func readBytes(r io.Reader, p []byte) error {
-	bytesRead := 0
-	for bytesRead < len(p) {
-		n, err := r.Read(p[bytesRead:])
-		if err != nil {
-			return err
-		}
-		bytesRead = bytesRead + n
-	}
-	return nil
-}
-
 func TestOpen(t *testing.T) {
 	t.Parallel()
 
-	pty, tty, err := Open()
-	if err != nil {
-		t.Errorf("Unexpected error from Open: %s", err)
-	}
-
-	err = tty.Close()
-	if err != nil {
-		t.Errorf("Unexpected error from tty Close: %s", err)
-	}
-
-	err = pty.Close()
-	if err != nil {
-		t.Errorf("Unexpected error from pty Close: %s", err)
-	}
+	openClose(t)
 }
 
 func TestName(t *testing.T) {
 	t.Parallel()
 
-	pty, tty, err := Open()
-	if err != nil {
-		t.Errorf("Unexpected error from Open: %s", err)
-	}
+	pty, tty := openClose(t)
 
 	// Check name isn't empty. There's variation on what exactly the OS calls these files.
 	if pty.Name() == "" {
-		t.Error("pty name was empty")
+		t.Error("Pty name was empty.")
 	}
 	if tty.Name() == "" {
-		t.Error("tty name was empty")
-	}
-
-	err = tty.Close()
-	if err != nil {
-		t.Errorf("Unexpected error from tty Close: %s", err)
-	}
-
-	err = pty.Close()
-	if err != nil {
-		t.Errorf("Unexpected error from pty Close: %s", err)
+		t.Error("Tty name was empty.")
 	}
 }
 
@@ -72,303 +31,142 @@ func TestName(t *testing.T) {
 func TestOpenByName(t *testing.T) {
 	t.Parallel()
 
-	pty, tty, err := Open()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer pty.Close()
-	defer tty.Close()
+	pty, tty := openClose(t) // Get the pty/tty pair.
 
-	ttyFile, err := os.OpenFile(tty.Name(), os.O_RDWR, 0600)
-	if err != nil {
-		t.Fatalf("Failed to open tty file: %v", err)
-	}
-	defer ttyFile.Close()
+	// Manually open the tty from the exiting name.
+	ttyFile, err := os.OpenFile(tty.Name(), os.O_RDWR, 0o600)
+	noError(t, err, "Failed to open tty file")
+	defer func() { _ = ttyFile.Close() }()
 
 	// Ensure we can write to the newly opened tty file and read on the pty.
 	text := []byte("ping")
-	n, err := ttyFile.Write(text)
-	if err != nil {
-		t.Errorf("Unexpected error from Write: %s", err)
-	}
-	if n != len(text) {
-		t.Errorf("Unexpected count returned from Write, got %d expected %d", n, len(text))
-	}
 
-	buffer := make([]byte, len(text))
-	if err := readBytes(pty, buffer); err != nil {
-		t.Errorf("Unexpected error from readBytes: %s", err)
-	}
-	if !bytes.Equal(text, buffer) {
-		t.Errorf("Unexpected result returned from Read, got %v expected %v", buffer, text)
-	}
+	n, err := ttyFile.Write(text)                                   // Write the text to the manually open tty.
+	noError(t, err, "Unexpected error from Write")                  // Make sure it didn't fail.
+	assert(t, len(text), n, "Unexpected count returned from Write") // Assert the number of bytes written.
+
+	buffer := readN(t, pty, len(text), "Unexpected error from pty Read")
+	assertBytes(t, text, buffer, "Unexpected result result returned from pty Read")
 }
 
 func TestGetsize(t *testing.T) {
 	t.Parallel()
 
-	pty, tty, err := Open()
-	if err != nil {
-		t.Errorf("Unexpected error from Open: %s", err)
-	}
+	pty, tty := openClose(t)
 
 	prows, pcols, err := Getsize(pty)
-	if err != nil {
-		t.Errorf("Unexpected error from Getsize: %s", err)
-	}
+	noError(t, err, "Unexpected error from pty Getsize")
 
 	trows, tcols, err := Getsize(tty)
-	if err != nil {
-		t.Errorf("Unexpected error from Getsize: %s", err)
-	}
+	noError(t, err, "Unexpected error from tty Getsize")
 
-	if prows != trows {
-		t.Errorf("pty rows != tty rows: %d != %d", prows, trows)
-	}
-	if prows != trows {
-		t.Errorf("pty cols != tty cols: %d != %d", pcols, tcols)
-	}
-
-	err = tty.Close()
-	if err != nil {
-		t.Errorf("Unexpected error from tty Close: %s", err)
-	}
-
-	err = pty.Close()
-	if err != nil {
-		t.Errorf("Unexpected error from pty Close: %s", err)
-	}
+	assert(t, prows, trows, "rows from Getsize on pty and tty should match")
+	assert(t, pcols, tcols, "cols from Getsize on pty and tty should match")
 }
 
-func TestGetsizefull(t *testing.T) {
+func TestGetsizeFull(t *testing.T) {
 	t.Parallel()
 
-	pty, tty, err := Open()
-	if err != nil {
-		t.Errorf("Unexpected error from Open: %s", err)
-	}
+	pty, tty := openClose(t)
 
 	psize, err := GetsizeFull(pty)
-	if err != nil {
-		t.Errorf("Unexpected error from GetsizeFull: %s", err)
-	}
+	noError(t, err, "Unexpected error from pty GetsizeFull")
 
 	tsize, err := GetsizeFull(tty)
-	if err != nil {
-		t.Errorf("Unexpected error from GetsizeFull: %s", err)
-	}
+	noError(t, err, "Unexpected error from tty GetsizeFull")
 
-	if psize.X != tsize.X {
-		t.Errorf("pty x != tty x: %d != %d", psize.X, tsize.X)
-	}
-	if psize.Y != tsize.Y {
-		t.Errorf("pty y != tty y: %d != %d", psize.Y, tsize.Y)
-	}
-	if psize.Rows != tsize.Rows {
-		t.Errorf("pty rows != tty rows: %d != %d", psize.Rows, tsize.Rows)
-	}
-	if psize.Cols != tsize.Cols {
-		t.Errorf("pty cols != tty cols: %d != %d", psize.Cols, tsize.Cols)
-	}
-
-	err = tty.Close()
-	if err != nil {
-		t.Errorf("Unexpected error from tty Close: %s", err)
-	}
-
-	err = pty.Close()
-	if err != nil {
-		t.Errorf("Unexpected error from pty Close: %s", err)
-	}
+	assert(t, psize.X, tsize.X, "X from GetsizeFull on pty and tty should match")
+	assert(t, psize.Y, tsize.Y, "Y from GetsizeFull on pty and tty should match")
+	assert(t, psize.Rows, tsize.Rows, "rows from GetsizeFull on pty and tty should match")
+	assert(t, psize.Cols, tsize.Cols, "cols from GetsizeFull on pty and tty should match")
 }
 
 func TestSetsize(t *testing.T) {
 	t.Parallel()
 
-	pty, tty, err := Open()
-	if err != nil {
-		t.Errorf("Unexpected error from Open: %s", err)
-	}
+	pty, tty := openClose(t)
 
 	psize, err := GetsizeFull(pty)
-	if err != nil {
-		t.Errorf("Unexpected error from GetsizeFull: %s", err)
-	}
+	noError(t, err, "Unexpected error from pty GetsizeFull")
 
-	psize.X = psize.X + 1
-	psize.Y = psize.Y + 1
-	psize.Rows = psize.Rows + 1
-	psize.Cols = psize.Cols + 1
+	psize.X++
+	psize.Y++
+	psize.Rows++
+	psize.Cols++
 
-	err = Setsize(tty, psize)
-	if err != nil {
-		t.Errorf("Unexpected error from Setsize: %s", err)
-	}
+	noError(t, Setsize(tty, psize), "Unexpected error from Setsize")
 
 	tsize, err := GetsizeFull(tty)
-	if err != nil {
-		t.Errorf("Unexpected error from GetsizeFull: %s", err)
-	}
+	noError(t, err, "Unexpected error from tty GetsizeFull")
 
-	if psize.X != tsize.X {
-		t.Errorf("pty x != tty x: %d != %d", psize.X, tsize.X)
-	}
-	if psize.Y != tsize.Y {
-		t.Errorf("pty y != tty y: %d != %d", psize.Y, tsize.Y)
-	}
-	if psize.Rows != tsize.Rows {
-		t.Errorf("pty rows != tty rows: %d != %d", psize.Rows, tsize.Rows)
-	}
-	if psize.Cols != tsize.Cols {
-		t.Errorf("pty cols != tty cols: %d != %d", psize.Cols, tsize.Cols)
-	}
-
-	err = tty.Close()
-	if err != nil {
-		t.Errorf("Unexpected error from tty Close: %s", err)
-	}
-
-	err = pty.Close()
-	if err != nil {
-		t.Errorf("Unexpected error from pty Close: %s", err)
-	}
+	assert(t, psize.X, tsize.X, "Unexpected Getsize X result after Setsize")
+	assert(t, psize.Y, tsize.Y, "Unexpected Getsize Y result after Setsize")
+	assert(t, psize.Rows, tsize.Rows, "Unexpected Getsize Rows result after Setsize")
+	assert(t, psize.Cols, tsize.Cols, "Unexpected Getsize Cols result after Setsize")
 }
 
 func TestReadWriteText(t *testing.T) {
 	t.Parallel()
 
-	pty, tty, err := Open()
-	if err != nil {
-		t.Errorf("Unexpected error from Open: %s", err)
-	}
+	pty, tty := openClose(t)
 
-	// Write to tty, read from pty
-	text := []byte("ping")
-	n, err := tty.Write(text)
-	if err != nil {
-		t.Errorf("Unexpected error from Write: %s", err)
-	}
-	if n != len(text) {
-		t.Errorf("Unexpected count returned from Write, got %d expected %d", n, len(text))
-	}
+	// Write to tty, read from pty.
+	{
+		text := []byte("ping")
 
-	buffer := make([]byte, 4)
-	err = readBytes(pty, buffer)
-	if err != nil {
-		t.Errorf("Unexpected error from readBytes: %s", err)
-	}
-	if !bytes.Equal(text, buffer) {
-		t.Errorf("Unexpected result returned from Read, got %v expected %v", buffer, text)
+		n, err := tty.Write(text)
+		noError(t, err, "Unexpected error from tty Write")
+		assert(t, n, len(text), "Unexpected count returned from tty Write")
+
+		buffer := readN(t, pty, len(text), "Unexpected error from pty Read")
+		assertBytes(t, text, buffer, "Unexpected result returned from pty Read")
 	}
 
 	// Write to pty, read from tty.
 	// We need to send a \n otherwise this will block in the terminal driver.
-	text = []byte("pong\n")
-	n, err = pty.Write(text)
-	if err != nil {
-		t.Errorf("Unexpected error from Write: %s", err)
-	}
-	if n != len(text) {
-		t.Errorf("Unexpected count returned from Write, got %d expected %d", n, len(text))
-	}
+	{
+		text := []byte("pong\n")
 
-	buffer = make([]byte, 5)
-	err = readBytes(tty, buffer)
-	if err != nil {
-		t.Errorf("Unexpected error from readBytes: %s", err)
-	}
-	expect := []byte("pong\n")
-	if !bytes.Equal(expect, buffer) {
-		t.Errorf("Unexpected result returned from Read, got %v expected %v", buffer, expect)
-	}
+		n, err := pty.Write(text)
+		noError(t, err, "Unexpected error from pty Write")
+		assert(t, n, len(text), "Unexpected count returned from pty Write")
 
-	// Read the echo back from pty
-	buffer = make([]byte, 5)
-	err = readBytes(pty, buffer)
-	if err != nil {
-		t.Errorf("Unexpected error from readBytes: %s", err)
-	}
-	expect = []byte("pong\r")
-	if !bytes.Equal(expect, buffer) {
-		t.Errorf("Unexpected result returned from Read, got %v expected %v", buffer, expect)
-	}
+		// Expect the raw text back when reading from tty.
+		buffer := readN(t, tty, len(text), "Unexpected error from tty Read")
+		assertBytes(t, text, buffer, "Unexpected result returned from tty Read")
 
-	err = tty.Close()
-	if err != nil {
-		t.Errorf("Unexpected error from tty Close: %s", err)
-	}
-
-	err = pty.Close()
-	if err != nil {
-		t.Errorf("Unexpected error from pty Close: %s", err)
+		// Read the echo back from pty. Expect LF to be CRLF.
+		expect := []byte("pong\r\n")
+		buffer = readN(t, pty, len(expect), "Unexpected error from pty Read")
+		assertBytes(t, expect, buffer, "Unexpected result returned from pty Read")
 	}
 }
 
 func TestReadWriteControls(t *testing.T) {
 	t.Parallel()
 
-	pty, tty, err := Open()
-	if err != nil {
-		t.Errorf("Unexpected error from Open: %s", err)
-	}
+	pty, tty := openClose(t)
 
-	// Write the start of a line to pty
-	text := []byte("pind")
-	n, err := pty.Write(text)
-	if err != nil {
-		t.Errorf("Unexpected error from Write: %s", err)
-	}
-	if n != len(text) {
-		t.Errorf("Unexpected count returned from Write, got %d expected %d", n, len(text))
-	}
+	// Write the start of a line to pty.
+	n, err := pty.WriteString("pind")                                    // Intentional typo.
+	noError(t, err, "Unexpected error from Write initial text")          // Make sure it didn't fail.
+	assert(t, 4, n, "Unexpected count returned from Write initial text") // Assert the number of bytes written.
 
-	// Backspace that last char
-	n, err = pty.Write([]byte("\b"))
-	if err != nil {
-		t.Errorf("Unexpected error from Write: %s", err)
-	}
-	if n != 1 {
-		t.Errorf("Unexpected count returned from Write, got %d expected %d", n, 1)
-	}
+	// Backspace that last char.
+	n, err = pty.WriteString("\b")                                    // "Remove" the typo.
+	noError(t, err, "Unexpected error from Write backspace")          // Make sure it didn't fail.
+	assert(t, 1, n, "Unexpected count returned from Write backspace") // Assert the number of bytes written.
 
-	// Write the correct char and a CR
-	n, err = pty.Write([]byte("g\n"))
-	if err != nil {
-		t.Errorf("Unexpected error from Write: %s", err)
-	}
-	if n != 2 {
-		t.Errorf("Unexpected count returned from Write, got %d expected %d", n, 2)
-	}
+	// Write the correct char and a LF.
+	n, err = pty.WriteString("g\n")                                    // Fix the typo.
+	noError(t, err, "Unexpected error from Write fixed text")          // Make sure it didn't fail.
+	assert(t, 2, n, "Unexpected count returned from Write fixed text") // Assert the number of bytes written.
 
-	// Read the line
-	buffer := make([]byte, 7)
-	err = readBytes(tty, buffer)
-	if err != nil {
-		t.Errorf("Unexpected error from readBytes: %s", err)
-	}
-	expect := []byte("pind\bg\n")
-	if !bytes.Equal(expect, buffer) {
-		t.Errorf("Unexpected result returned from Read, got %v expected %v", buffer, expect)
-	}
+	// Read the line.
+	buffer := readN(t, tty, 7, "Unexpected error from tty Read")
+	assertBytes(t, []byte("pind\bg\n"), buffer, "Unexpected result returned from tty Read")
 
-	// Read the echo back from pty
-	buffer = make([]byte, 7)
-	err = readBytes(pty, buffer)
-	if err != nil {
-		t.Errorf("Unexpected error from readBytes: %s", err)
-	}
-	expect = []byte("pind^Hg")
-	if !bytes.Equal(expect, buffer) {
-		t.Errorf("Unexpected result returned from Read, got %v expected %v", buffer, expect)
-	}
-
-	err = tty.Close()
-	if err != nil {
-		t.Errorf("Unexpected error from tty Close: %s", err)
-	}
-
-	err = pty.Close()
-	if err != nil {
-		t.Errorf("Unexpected error from pty Close: %s", err)
-	}
+	// Read the echo back from pty.
+	buffer = readN(t, pty, 9, "Unexpected error from pty Read")
+	assertBytes(t, []byte("pind^Hg\r\n"), buffer, "Unexpected result returned from pty Read")
 }
