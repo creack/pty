@@ -1,3 +1,3 @@
-module github.com/creack/pty/v2
+module github.com/creack/pty
 
-go 1.18
+go 1.13
