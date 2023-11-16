@@ -51,5 +51,10 @@ jobs:
       # Skip tests for 1.6 as we use modern Go.
       # If the main lib builds and tests pass on other versions, we are good.
       - if: ${{ matrix.go_version != '1.6.x' }}
-        name: Test
+        name: Single Test
         run: go test -v
+
+      # Run the tests again 100 times without verbose.
+      - if: ${{ matrix.go_version != '1.6.x' }}
+        name: Many Tests
+        run: go test -count=100 -timeout=10s
