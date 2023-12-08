@@ -3,7 +3,11 @@
 
 package pty
 
-import "syscall"
+import (
+	"syscall"
+
+	"golang.org/x/sys/unix"
+)
 
 // Local syscall const values.
 const (
@@ -12,7 +16,7 @@ const (
 )
 
 func ioctlInner(fd, cmd, ptr uintptr) error {
-	_, _, e := syscall.Syscall(syscall.SYS_IOCTL, fd, cmd, ptr)
+	_, _, e := unix.Syscall(syscall.SYS_IOCTL, fd, cmd, ptr)
 	if e != 0 {
 		return e
 	}

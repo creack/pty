@@ -28,8 +28,6 @@ var glTestFdLock sync.Mutex
 //
 //nolint:paralleltest // Potential in (*os.File).Fd().
 func TestReadDeadline(t *testing.T) {
-	t.Skip("Disabling while investigating race.")
-
 	ptmx, success := prepare(t)
 
 	if err := ptmx.SetDeadline(time.Now().Add(timeout / 10)); err != nil {
@@ -59,8 +57,6 @@ func TestReadDeadline(t *testing.T) {
 //
 //nolint:paralleltest // Potential in (*os.File).Fd().
 func TestReadClose(t *testing.T) {
-	t.Skip("Disabling while investigating race.")
-
 	ptmx, success := prepare(t)
 
 	go func() {
