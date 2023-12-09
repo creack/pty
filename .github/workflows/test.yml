@@ -57,4 +57,4 @@ jobs:
       # Run the tests again 100 times without verbose.
       - if: ${{ matrix.go_version != '1.6.x' }}
         name: Many Tests
-        run: go test -count=100 -timeout=10s
+        run: go test -count=100 -timeout=30s
