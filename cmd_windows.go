@@ -28,12 +28,14 @@ type windowExecCmd struct {
 	cmd        *exec.Cmd
 	waitCalled bool
 	conPty     *WindowsPty
+	conTty     *WindowsTty
 	attrList   *windows.ProcThreadAttributeListContainer
 }
 
 func (c *windowExecCmd) close() error {
 	c.attrList.Delete()
 	_ = c.conPty.Close()
+	_ = c.conTty.Close()
 
 	return nil
 }

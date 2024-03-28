@@ -34,7 +34,7 @@ func StartWithSize(c *exec.Cmd, sz *Winsize) (Pty, error) {
 // This should generally not be needed. Used in some edge cases where it is needed to create a pty
 // without a controlling terminal.
 func StartWithAttrs(c *exec.Cmd, sz *Winsize, attrs *syscall.SysProcAttr) (Pty, error) {
-	pty, _, err := open()
+	pty, tty, err := open()
 	if err != nil {
 		return nil, err
 	}
@@ -62,6 +62,7 @@ func StartWithAttrs(c *exec.Cmd, sz *Winsize, attrs *syscall.SysProcAttr) (Pty, 
 		cmd:        c,
 		waitCalled: false,
 		conPty:     pty.(*WindowsPty),
+		conTty:     tty.(*WindowsTty),
 	}
 
 	if err := w.Start(); err != nil {

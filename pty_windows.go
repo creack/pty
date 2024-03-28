@@ -74,14 +74,6 @@ func open() (_ Pty, _ Tty, err error) {
 		return nil, nil, err
 	}
 
-	// These pipes can be closed here without any worry.
-	if err := consoleW.Close(); err != nil {
-		return nil, nil, fmt.Errorf("failed to close pseudo console write handle: %w", err)
-	}
-	if err := consoleR.Close(); err != nil {
-		return nil, nil, fmt.Errorf("failed to close pseudo console read handle: %w", err)
-	}
-
 	return &WindowsPty{
 			handle: consoleHandle,
 			r:      pr,
