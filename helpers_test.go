@@ -4,12 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"io"
-	"os"
 	"testing"
 )
 
-// openCloses opens a pty/tty pair and stages the closing as part of the cleanup.
-func openClose(t *testing.T) (pty, tty *os.File) {
+// openClose opens a pty/tty pair and stages the closing as part of the cleanup.
+func openClose(t *testing.T) (Pty, Tty) {
 	t.Helper()
 
 	pty, tty, err := Open()

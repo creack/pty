@@ -34,13 +34,17 @@ func TestReadDeadline(t *testing.T) {
 		t.Fatalf("Error: set non block: %s", err)
 	}
 
-	if err := ptmx.SetDeadline(time.Now().Add(timeout / 10)); err != nil {
-		if errors.Is(err, os.ErrNoDeadline) {
-			t.Skipf("Deadline is not supported on %s/%s.", runtime.GOOS, runtime.GOARCH)
-		} else {
-			t.Fatalf("Error: set deadline: %s.", err)
-		}
-	}
+  if ptmxd, ok := ptmx.(DeadlineHolder); ok {
+		if err := ptmxd.SetDeadline(time.Now().Add(timeout / 10)); err != nil {
+			if errors.Is(err, os.ErrNoDeadline) {
+				t.Skipf("Deadline is not supported on %s/%s.", runtime.GOOS, runtime.GOARCH)
+			} else {
+				t.Fatalf("Error: set deadline: %s.\n", err)
+			}
+    }
+  } else {
+    t.Fatalf("Unexpected ptmx type: missing deadline method (%T)", ptmx)
+  }
 
 	buf := make([]byte, 1)
 	n, err := ptmx.Read(buf)
@@ -85,8 +89,8 @@ func TestReadClose(t *testing.T) {
 	}
 }
 
-// Open pty and setup watchdogs for graceful and not so graceful failure modes.
-func prepare(t *testing.T) (ptmx *os.File, done func()) {
+// Open pty and setup watchdogs for graceful and not so graceful failure modes
+func prepare(t *testing.T) (ptmx Pty, done func()) {
 	t.Helper()
 
 	if runtime.GOOS == "darwin" {
