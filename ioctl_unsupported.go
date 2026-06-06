@@ -1,5 +1,5 @@
-//go:build aix
-// +build aix
+//go:build aix || plan9
+// +build aix plan9
 
 package pty
 
