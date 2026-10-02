@@ -11,7 +11,6 @@ const (
 )
 
 type fiodgnameArg struct {
-	Len       int32
-	Pad_cgo_0 [4]byte
-	Buf       *byte
+	Len int32
+	Buf *byte
 }
