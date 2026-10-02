@@ -40,6 +40,13 @@ func open() (pty, tty *os.File, err error) {
 	if err != nil {
 		return nil, nil, err
 	}
+
+	var tios syscall.Termios
+	if err := ioctl(t, syscall.TIOCGETA, unsafe.Pointer(&tios)); err == nil {
+		tios.Iflag |= syscall.IUTF8
+		_ = ioctl(t, syscall.TIOCSETA, unsafe.Pointer(&tios))
+	}
+
 	return p, t, nil
 }
 
